@@ -3,7 +3,12 @@
 	"name": "Csound ORC",
 	"patterns": [
 		{
-			"include": "#keywords"
+			"name": "keyword.control.csound-orc",
+			"match": "\\b(if|elseif|else|then|endif|goto|kgoto|igoto|while|until|do|od)\\b"
+		},
+		{
+			"name": "storage.type.csound-orc",
+			"match": "\\b(opcode|endop|instr|endin)\\b"
 		},
 		{
 			"include": "#strings"
@@ -11,15 +16,8 @@
 		{
 			"include": "#comment"
 		}
-
 	],
 	"repository": {
-		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.csound-orc",
-				"match": "\\b(if|elseif|else|then|endif|goto|kgoto|igoto|while|until|do|od)\\b"
-			}]
-		},
 		"strings": {
 			"name": "string.quoted.double.csound-orc",
 			"begin": "\"",
