@@ -7,7 +7,11 @@
 		},
 		{
 			"include": "#strings"
+		},
+		{
+			"include": "#comment"
 		}
+
 	],
 	"repository": {
 		"keywords": {
@@ -24,6 +28,47 @@
 				{
 					"name": "constant.character.escape.csound-orc",
 					"match": "\\\\."
+				}
+			]
+		},
+		"comment": {
+			"patterns": [
+				{
+					"begin": "/\\*",
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.csound.orc"
+						}
+					},
+					"end": "\\*/",
+					"name": "comment.block.csound"
+				},
+				{
+					"begin": "(^[ \\t]+)?(?=;|//)",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.whitespace.comment.leading.csound"
+						}
+					},
+					"end": "(?!\\G)",
+					"patterns": [
+						{
+							"begin": ";|//",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.csound"
+								}
+							},
+							"end": "\\n",
+							"name": "comment.line.double-slash.csound",
+							"patterns": [
+								{
+									"match": "(?>\\\\\\s*\\n)",
+									"name": "punctuation.separator.continuation.csound"
+								}
+							]
+						}
+					]
 				}
 			]
 		}
