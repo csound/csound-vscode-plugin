@@ -20,7 +20,14 @@
                 "command": "extension.sayHello",
                 "title": "Hello World"
             }
-        ]
+        ],
+        "languages": [
+            {"id": "csound-orc",
+            "extensions": [
+                ".orc"
+            ],
+            "aliases": [ "Csound ORC"]
+        } ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
