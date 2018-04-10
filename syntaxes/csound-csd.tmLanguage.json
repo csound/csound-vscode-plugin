@@ -1,0 +1,45 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Csound CSD",
+	"patterns": [
+		{
+			"begin": "^<CsoundSynthesi[sz]er>",
+			"end": "^</CsoundSynthesi[sz]er>",
+			"name": "meta.tag.csound-csd",
+			"patterns": [
+				{
+					"begin": "^<CsInstruments>",
+					"end": "^</CsInstruments>",
+					"name": "meta.tag.csound-csd",
+					"patterns": [
+						{"include": "source.csound.orc"}
+					]
+				},
+				{
+					"begin": "^<CsScore>",
+					"end": "^</CsScore>",
+					"name": "meta.tag.csound-csd",
+					"patterns": [
+						{"include": "source.csound.sco"}
+					]
+				},
+				{
+					"begin": "^<CsOptions>",
+					"end": "^</CsOptions>",
+					"name": "meta.tag.csound-csd",
+					"patterns": [
+						{"include": "source.csound.orc#comments"}
+					]
+				},
+				{
+					"begin": "^<Cabbage>",
+					"end": "^</Cabbage>",
+					"name": "meta.tag.csound-csd",
+					"patterns": [
+					]
+				}
+			]
+		}
+	],
+	"scopeName": "source.csound.csd"
+}

@@ -1,0 +1,63 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Csound SCO",
+	"patterns": [
+		{ "include": "#strings" },
+		{ "include": "#comment" }
+	],
+	"repository": {
+		"strings": {
+			"name": "string.quoted.double.csound-orc",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.csound-orc",
+					"match": "\\\\."
+				}
+			]
+		},
+		"comment": {
+			"patterns": [
+				{
+					"begin": "/\\*",
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.csound.orc"
+						}
+					},
+					"end": "\\*/",
+					"name": "comment.block.csound"
+				},
+				{
+					"begin": "(^[ \\t]+)?(?=;|//)",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.whitespace.comment.leading.csound"
+						}
+					},
+					"end": "(?!\\G)",
+					"patterns": [
+						{
+							"begin": ";|//",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.csound"
+								}
+							},
+							"end": "$",
+							"name": "comment.line.double-slash.csound",
+							"patterns": [
+								{
+									"match": "(?>\\\\\\s*$)",
+									"name": "punctuation.separator.continuation.csound"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	},
+	"scopeName": "source.csound.sco"
+}
