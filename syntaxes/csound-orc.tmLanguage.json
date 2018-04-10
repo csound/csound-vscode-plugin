@@ -15,8 +15,12 @@
 			"match": "\\b(sr|kr|ksmps|0dbfs|nchnls_i|nchnls)\\b"
 		},
 		{
-			"name": "constant.numeric.csound",
+			"name": "constant.numeric.csound-orc",
 			"match": "\\b[+-]?\\d+(\\.\\d+)?\\b"
+		},
+		{
+			"name": "meta.preprocessor.csound-orc",
+			"match": "^\\#(include|define|undef|ifdef|ifndef)"
 		},
 		{ "include": "#strings" },
 		{ "include": "#comment" }
