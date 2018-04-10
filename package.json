@@ -21,42 +21,60 @@
                 "title": "Hello World"
             }
         ],
-        "languages": [{
-            "id": "csound-orc",
-            "aliases": ["Csound ORC", "csound-orc"],
-            "extensions": [".orc", ".udo"],
-            "configuration": "./language-configuration.json"
-        },
-        {
-            "id": "csound-sco",
-            "aliases": ["Csound SCO", "csound-sco"],
-            "extensions": [".sco"],
-            "configuration": "./language-configuration.json"
-        },
-        {
-            "id": "csound-csd",
-            "aliases": ["Csound CSD", "csound-csd"],
-            "extensions": [".csd"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "csound-orc",
-            "scopeName": "source.csound.orc",
-            "path": "./syntaxes/csound-orc.tmLanguage.json"
-        },
-        {
-            "language": "csound-sco",
-            "scopeName": "source.csound.sco",
-            "path": "./syntaxes/csound-sco.tmLanguage.json"
-        },
-        {
-            "language": "csound-csd",
-            "scopeName": "source.csound.csd",
-            "path": "./syntaxes/csound-csd.tmLanguage.json"
-        }
-    ]
+        "languages": [
+            {
+                "id": "csound-orc",
+                "aliases": [
+                    "Csound ORC",
+                    "csound-orc"
+                ],
+                "extensions": [
+                    ".orc",
+                    ".udo"
+                ],
+                "configuration": "./language-configuration.json"
+            },
+            {
+                "id": "csound-sco",
+                "aliases": [
+                    "Csound SCO",
+                    "csound-sco"
+                ],
+                "extensions": [
+                    ".sco"
+                ],
+                "configuration": "./language-configuration.json"
+            },
+            {
+                "id": "csound-csd",
+                "aliases": [
+                    "Csound CSD",
+                    "csound-csd"
+                ],
+                "extensions": [
+                    ".csd"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "csound-orc",
+                "scopeName": "source.csound.orc",
+                "path": "./syntaxes/csound-orc.tmLanguage.json"
+            },
+            {
+                "language": "csound-sco",
+                "scopeName": "source.csound.sco",
+                "path": "./syntaxes/csound-sco.tmLanguage.json"
+            },
+            {
+                "language": "csound-csd",
+                "scopeName": "source.csound.csd",
+                "path": "./syntaxes/csound-csd.tmLanguage.json"
+            }
+        ]
     },
-
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
