@@ -1,9 +1,9 @@
 {
     "name": "csound-vscode-plugin",
-    "displayName": "csound-vscode-plugin",
+    "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
     "version": "0.0.1",
-    "publisher": "csound",
+    "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.22.0"
     },
