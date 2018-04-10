@@ -24,7 +24,7 @@
         "languages": [{
             "id": "csound-orc",
             "aliases": ["Csound ORC", "csound-orc"],
-            "extensions": [".orc"],
+            "extensions": [".orc", ".udo"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
