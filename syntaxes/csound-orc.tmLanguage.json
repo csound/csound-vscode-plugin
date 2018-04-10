@@ -11,11 +11,15 @@
 			"match": "\\b(opcode|endop|instr|endin)\\b"
 		},
 		{
-			"include": "#strings"
+			"name": "variable.language.csound-orc",
+			"match": "\\b(sr|kr|ksmps|0dbfs|nchnls_i|nchnls)\\b"
 		},
 		{
-			"include": "#comment"
-		}
+			"name": "constant.numeric.csound",
+			"match": "\\b[+-]?\\d+(\\.\\d+)?\\b"
+		},
+		{ "include": "#strings" },
+		{ "include": "#comment" }
 	],
 	"repository": {
 		"strings": {
@@ -57,11 +61,11 @@
 									"name": "punctuation.definition.comment.csound"
 								}
 							},
-							"end": "\\n",
+							"end": "$",
 							"name": "comment.line.double-slash.csound",
 							"patterns": [
 								{
-									"match": "(?>\\\\\\s*\\n)",
+									"match": "(?>\\\\\\s*$)",
 									"name": "punctuation.separator.continuation.csound"
 								}
 							]
