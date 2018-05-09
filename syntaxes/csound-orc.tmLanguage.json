@@ -12,7 +12,7 @@
       "end": "\\bendin\\b",
       "endCaptures": {
         "0": {
-          "name": "keyword.other.csound"
+          "name": "storage.type.function.csound"
         }
       },
       "patterns": [
@@ -22,7 +22,7 @@
           "end": "$",
           "beginCaptures": {
             "0": {
-              "name": "keyword.function.csound"
+              "name": "storage.type.function.csound"
             }
           },
           "patterns": [
@@ -613,7 +613,7 @@
           ]
         },
         {
-          "name": "support.variable.csound",
+          "name": "variable.parameter.csound",
           "match": "\\bp\\d+\\b"
         },
         {
@@ -635,7 +635,15 @@
         },
         {
           "name": "meta.other.csound",
-          "match": "\\b[A-Z_a-z]\\w*\\b"
+          "match": "\\b([A-Z_a-z])\\w*\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.variable.csound"
+            },
+            "2": {
+              "name": "meta.other.csound"
+            } 
+          }
         }
       ]
     },

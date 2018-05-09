@@ -1,6 +1,7 @@
 {
   "name": "Csound SCO",
   "scopeName": "source.csound.sco",
+  "comment": "Csound Score Syntax v.6.10",
   "patterns": [
     {
       "include": "source.csound.orc#preprocessorDirectives"

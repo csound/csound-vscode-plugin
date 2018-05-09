@@ -1,9 +1,7 @@
 {
   "name": "Csound CSD",
   "scopeName": "source.csound.csd",
-  "fileTypes": [
-    "csd"
-  ],
+  "comment": "Csound CSD Syntax v.6.10",
   "firstLineMatch": "<CsoundSynthesi[sz]er>",
   "patterns": [
     {
