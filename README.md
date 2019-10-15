@@ -8,7 +8,7 @@ Program currently provides:
 
 * Syntax Highlighting for Csound .orc and .udo files
 
-> Note: Plugin is currently in Alpha state.
+* Will play the CSD file in the currently-active editor window, Choose 
 
 ## Requirements
 

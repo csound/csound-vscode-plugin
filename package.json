@@ -2,25 +2,40 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.0.3",
+    "version": "0.2.0",
     "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.22.0"
     },
     "categories": [
-        "Languages"
+        "Programming Languages"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:extension.csoundPlayActiveDocument"
     ],
     "main": "./out/extension",
     "contributes": {
         "commands": [
             {
-                "command": "extension.sayHello",
-                "title": "Hello World"
+                "command": "extension.csoundPlayActiveDocument",
+                "title": "Csound: Play Active CSD Document"
             }
         ],
+        "configuration": {
+            "title": "Csound",
+            "properties": {
+                "csound.executable": {
+                    "type": "string",
+                    "default" : "csound",
+                    "description": "The csound executable"
+                },
+                "csound.playArgs": {
+                    "type": "array",
+                    "default": ["-odac"],
+                    "description": "Arguments to csound when used for playing the current file. An array of strings, each element an argument including the leading dash."
+                }
+            }
+        },
         "languages": [
             {
                 "id": "csound-orc",
@@ -73,7 +88,12 @@
                 "scopeName": "source.csound.csd",
                 "path": "./syntaxes/csound-csd.tmLanguage.json"
             }
-        ]
+        ],
+        "keybindings": [{
+            "command": "extension.csoundPlayActiveDocument",
+            "key": "alt+.",
+            "when": "editorLangId == csound-csd && editorFocus"
+        }]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -83,11 +103,11 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "tslint": "^5.8.0",
+        "@types/mocha": "^2.2.42",
         "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
+        "tslint": "^5.8.0",
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.34"
     },
     "repository": {
         "type": "git",
