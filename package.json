@@ -33,9 +33,14 @@
                     "type": "array",
                     "default": ["-odac"],
                     "description": "Arguments to csound when used for playing the current file. An array of strings, each element an argument including the leading dash."
+                },
+                "csound.saveSilentlyOnPlay": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Save without prompting before playing the current file."
                 }
             }
-        },
+         },
         "languages": [
             {
                 "id": "csound-orc",

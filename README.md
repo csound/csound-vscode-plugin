@@ -1,4 +1,5 @@
-# csound-vscode-plugin 
+<!-- markdownlint-disable MD033 -->
+# csound-vscode-plugin
 
 A Csound language plugin for Visual Studio Code.
 
@@ -8,25 +9,31 @@ Program currently provides:
 
 * Syntax Highlighting for Csound .orc and .udo files
 
-* Will play the CSD file in the currently-active editor window, Choose 
+* Play the CSD file in the currently-active editor window by choosing `Csound: Play Active CSD Document` from the command palette or using the `Alt+.` shortcut.
 
 ## Requirements
 
-This plugin assumes you will be running Csound yourself in a terminal. Plans are to include running projects from within Visual Studio Code. 
+You must have Csound properly configured on your system so you can use it on the comand line.
 
 ## Extension Settings
 
-This extension does not yet have any settings.  
-
+| setting                     | default       | description                                                                                                                                 |
+| --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `csound.executable`         | `"csound"`    | The csound executable                                                                                                                       |
+| csound.playArgs             | `[ "-odac" ]` | Arguments to csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
+| `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Currently this extension can only play CSD files from the currently-active editor window. A method of associating the appropriate
+ORC to a SCO file (or SCO to an ORC file) will need to be implemented before these are playable inside of VSCode.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.2.0
 
-### 0.0.1 
+Added the ability to play CSD files from within VSCode.
+
+### 0.0.1
 
 Alpha: initial release

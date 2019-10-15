@@ -67,13 +67,15 @@ async function saveToPlayDialog(): Promise<string> {
             if (selected) {
                 if (selected.title === "Always silently save before playing") {
                     setSaveSilentlyOnPlay();
+                    return "Save";
+                } else {
+                    return selected.title;
                 }
-                return "Save";
             } else {
                 return "Cancel";
             }
         });
-    return selected;
+    return selected || "Cancel";
 }
 
 async function setSaveSilentlyOnPlay() {
