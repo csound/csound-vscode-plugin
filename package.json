@@ -2,7 +2,7 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.22.0"
@@ -19,6 +19,10 @@
             {
                 "command": "extension.csoundPlayActiveDocument",
                 "title": "Csound: Play Active CSD Document"
+            },
+            {
+                "command": "extension.csoundKillCsoundProcess",
+                "title": "Csound: Terminate any running csound subprocess"
             }
         ],
         "configuration": {
@@ -94,11 +98,17 @@
                 "path": "./syntaxes/csound-csd.tmLanguage.json"
             }
         ],
-        "keybindings": [{
-            "command": "extension.csoundPlayActiveDocument",
-            "key": "alt+.",
-            "when": "editorLangId == csound-csd && editorFocus"
-        }]
+        "keybindings": [
+            {
+                "command": "extension.csoundPlayActiveDocument",
+                "key": "alt+.",
+                "when": "editorLangId == csound-csd && editorFocus"
+            },
+            {
+                "command": "extension.csoundKillCsoundProcess",
+                "key": "alt+escape"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",

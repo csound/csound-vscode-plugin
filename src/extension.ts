@@ -12,8 +12,13 @@ export function activate(context: vscode.ExtensionContext) {
         commands.playActiveDocument);
     context.subscriptions.push(playCommand);
 
+    const killCommand = vscode.commands.registerCommand(
+        'extension.csoundKillCsoundProcess',
+        commands.killCsoundProcess);
+    context.subscriptions.push(killCommand);
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+    commands.killCsoundProcess();
 }
