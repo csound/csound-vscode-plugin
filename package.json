@@ -11,7 +11,8 @@
         "Programming Languages"
     ],
     "activationEvents": [
-        "onCommand:extension.csoundPlayActiveDocument"
+        "onCommand:extension.csoundPlayActiveDocument",
+        "onCommand:extension.csoundKillCsoundProcess"
     ],
     "main": "./out/extension",
     "contributes": {
