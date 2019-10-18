@@ -6,7 +6,7 @@ import * as cp from 'child_process';
 import * as vscode from 'vscode';
 
 let output: vscode.OutputChannel;
-const processMap: any = {};
+const processMap: { [pid: number]: cp.ChildProcess | undefined } = {};
 
 export async function playActiveDocument(textEditor: vscode.TextEditor) {
     const config = vscode.workspace.getConfiguration("csound");
@@ -92,7 +92,7 @@ export function killCsoundProcess() {
     for (let pid in processMap) {
         let p = processMap[pid];
         if (p === undefined) {
-            delete p[pid];
+            delete processMap[pid];
         } else {
             console.log("Killing Csound process (pid " + p.pid + ")");
             p.kill('SIGTERM');
