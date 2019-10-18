@@ -31,6 +31,14 @@ ORC to a SCO file (or SCO to an ORC file) will need to be implemented before the
 
 ## Release Notes
 
+### 0.2.1
+
+Fix issue when attempting to kill when there are no Csound subprocesses running.
+
+### 0.2.1
+
+Add command to kill any running Csound subprocess. Kill any Csound process on exiting from VSCode.
+
 ### 0.2.0
 
 Added the ability to play CSD files from within VSCode.

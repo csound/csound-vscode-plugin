@@ -4,6 +4,10 @@ All notable changes to the "csound-vscode-plugin" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.2.2
+
+* Fixed to prevent error when running kill command with no Csound subprocesses.
+
 ## 0.2.1
 
 * Add command to kill any running Csound subprocess. Kill any Csound process on exiting from VSCode.
