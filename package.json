@@ -2,7 +2,7 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.22.0"
@@ -107,7 +107,8 @@
             },
             {
                 "command": "extension.csoundKillCsoundProcess",
-                "key": "alt+escape"
+                "key": "alt+escape",
+                "when": "editorLangId == csound-csd && editorFocus"
             }
         ]
     },

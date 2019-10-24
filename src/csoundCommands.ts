@@ -38,7 +38,7 @@ export async function playActiveDocument(textEditor: vscode.TextEditor) {
     const options = { cwd: path.dirname(document.fileName) };
 
     output.clear();
-    output.show();
+    output.show(true); // true means keep focus in the editor window
 
     const process = cp.spawn(command, args, options);
 

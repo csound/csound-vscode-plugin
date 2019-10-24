@@ -4,6 +4,12 @@ All notable changes to the "csound-vscode-plugin" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.2.3
+
+* Playing the contents of the CSD text editor doesn't shift focus to the output window.
+* `alt+escape` to kill CSound processes only works when focus is in a CSD text editor window (to increase
+  compatibility with other modules).
+
 ## 0.2.2
 
 * Fixed to prevent error when running kill command with no Csound subprocesses.
