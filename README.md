@@ -9,8 +9,10 @@ Program currently provides:
 
 * Syntax Highlighting for Csound .orc and .udo files
 
-* Play the CSD file in the currently-active editor window by choosing `Csound: Play Active CSD Document` from the command palette or using the `alt+.` shortcut. To kill a playing Csound subprocess, choose `Csound: Terminate any running csound subprocess`
-from the command palette or use the `alt+escape` shortcut.
+* Play the CSD file in the currently-active editor window by choosing `Csound: Play Active CSD Document`
+ from the command palette or using the `alt+.` shortcut. To kill a playing Csound subprocess, choose
+ `Csound: Terminate any running csound subprocess` from the command palette or use the `alt+escape` shortcut
+ while the focus is still in a CSD text editor window.
 
 ## Requirements
 
@@ -31,7 +33,12 @@ ORC to a SCO file (or SCO to an ORC file) will need to be implemented before the
 
 ## Release Notes
 
-### 0.2.1
+### 0.2.3
+
+Don't switch focus to output window when playing a CSD file. `alt+escape` only kills CSound subprocesses when focus is in a
+CSD text editor window (for better compatibility with other modules).
+
+### 0.2.2
 
 Fix issue when attempting to kill when there are no Csound subprocesses running.
 

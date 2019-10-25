@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
         commands.playActiveDocument);
     context.subscriptions.push(playCommand);
 
-    const killCommand = vscode.commands.registerCommand(
+    const killCommand = vscode.commands.registerTextEditorCommand(
         'extension.csoundKillCsoundProcess',
         commands.killCsoundProcess);
     context.subscriptions.push(killCommand);
