@@ -2,7 +2,7 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.22.0"
@@ -12,7 +12,9 @@
     ],
     "activationEvents": [
         "onCommand:extension.csoundPlayActiveDocument",
-        "onCommand:extension.csoundKillCsoundProcess"
+        "onCommand:extension.csoundKillCsoundProcess",
+        "onCommand:extension.csoundEvalOrc",
+        "onCommand:extension.csoundEvalSco"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -24,6 +26,14 @@
             {
                 "command": "extension.csoundKillCsoundProcess",
                 "title": "Csound: Terminate any running csound subprocess"
+            },
+            {
+                "command": "extension.csoundEvalOrc",
+                "title": "Csound: Evaluate Orchestra Code"
+            },
+            {
+                "command": "extension.csoundEvalSco",
+                "title": "Csound: Evaluate Score Code"
             }
         ],
         "configuration": {
@@ -43,7 +53,18 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Save without prompting before playing the current file."
+                },
+                "csound.UDPAddress": {
+                    "type": "string",
+                    "default": "127.0.0.1",
+                    "description": "Server address to send live coding evaluations over UDP. "
+                },
+                "csound.UDPPort": {
+                    "type": "number",
+                    "default": 10000,
+                    "description": "Port to send live coding evaluations over UDP."
                 }
+
             }
          },
         "languages": [
@@ -109,6 +130,12 @@
                 "command": "extension.csoundKillCsoundProcess",
                 "key": "alt+escape",
                 "when": "editorLangId == csound-csd && editorFocus"
+            },
+            {
+                "command": "extension.csoundEvalOrc",
+                "key": "ctrl+enter",
+                "mac": "cmd+enter",
+                "when": "editorTextFocus"
             }
         ]
     },

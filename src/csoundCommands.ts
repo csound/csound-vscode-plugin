@@ -1,9 +1,12 @@
-'use strict';
+"use strict";
 
-import * as path from 'path';
-import * as cp from 'child_process';
+import * as path from "path";
+import * as cp from "child_process";
+import * as vscode from "vscode";
+import * as dgram from "dgram";
+import { flash, getEvalText, getScoEvalText } from "./utils"; 
 
-import * as vscode from 'vscode';
+const socket = dgram.createSocket("udp4");
 
 let output: vscode.OutputChannel;
 const processMap: { [pid: number]: cp.ChildProcess | undefined } = {};
@@ -14,7 +17,7 @@ export async function playActiveDocument(textEditor: vscode.TextEditor) {
     // Currently only play csd files.
     // We need to figure out how to find matching .sco for .orc
     // (or .orc for .sco) before we can play those.
-    if (document.languageId !== 'csound-csd') {
+    if (document.languageId !== "csound-csd") {
         return;
     }
     if (document.isDirty) {
@@ -44,15 +47,15 @@ export async function playActiveDocument(textEditor: vscode.TextEditor) {
 
     processMap[process.pid] = process;
 
-    process.stdout.on('data', (data) => {
+    process.stdout.on("data", (data) => {
         // I've seen spurious 'ANSI reset color' sequences in some csound output
         // which doesn't render correctly in this context. Stripping that out here.
-        output.append(data.toString().replace(/\x1b\[m/g, ''));
+        output.append(data.toString().replace(/\x1b\[m/g, ""));
     });
-    process.stderr.on('data', (data) => {
+    process.stderr.on("data", (data) => {
         // It looks like all csound output is written to stderr, actually.
         // If you want your changes to show up, change this one.
-        output.append(data.toString().replace(/\x1b\[m/g, ''));
+        output.append(data.toString().replace(/\x1b\[m/g, ""));
     });
     if (process.pid) {
         console.log("Csound is playing (pid " + process.pid + ")");
@@ -60,13 +63,17 @@ export async function playActiveDocument(textEditor: vscode.TextEditor) {
 }
 
 async function saveToPlayDialog(): Promise<string> {
-
-    const selected = await vscode.window.showInformationMessage<vscode.MessageItem>(
-        "Save file for Csound to play?",
-        { modal: true },
-        { title: "Cancel", isCloseAffordance: true },
-        { title: "Save", isCloseAffordance: false },
-        { title: "Always silently save before playing", isCloseAffordance: false })
+    const selected = await vscode.window
+        .showInformationMessage<vscode.MessageItem>(
+            "Save file for Csound to play?",
+            { modal: true },
+            { title: "Cancel", isCloseAffordance: true },
+            { title: "Save", isCloseAffordance: false },
+            {
+                title: "Always silently save before playing",
+                isCloseAffordance: false,
+            }
+        )
 
         .then((selected) => {
             if (selected) {
@@ -95,8 +102,34 @@ export function killCsoundProcess() {
             delete processMap[pid];
         } else {
             console.log("Killing Csound process (pid " + p.pid + ")");
-            p.kill('SIGTERM');
+            p.kill("SIGTERM");
             console.log("Csound subprocess terminated");
         }
     }
+}
+
+export async function evalOrc(textEditor: vscode.TextEditor) {
+    const config = vscode.workspace.getConfiguration("csound");
+    const port = config.get("UDPPort") as number;
+    const address = config.get("UDPAddress") as string;
+
+    const document = textEditor.document;
+    const selection = textEditor.selection;
+
+    const { text, from , to} = getEvalText(document, selection);
+    socket.send(text, port, address);
+    flash(textEditor, new vscode.Range(from, to));
+}
+
+export async function evalSco(textEditor: vscode.TextEditor) {
+    const config = vscode.workspace.getConfiguration("csound");
+    const port = config.get("UDPPort") as number;
+    const address = config.get("UDPAddress") as string;
+
+    const document = textEditor.document;
+    const selection = textEditor.selection;
+
+    const { text, from , to} = getScoEvalText(document, selection);
+    socket.send("$" + text, port, address);
+    flash(textEditor, new vscode.Range(from, to));
 }

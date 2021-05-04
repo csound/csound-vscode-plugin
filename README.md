@@ -14,6 +14,8 @@ Program currently provides:
  `Csound: Terminate any running csound subprocess` from the command palette or use the `alt+escape` shortcut
  while the focus is still in a CSD text editor window.
 
+ * Evaluate code at runtime (live coding) using `Csound: Evaluate Orchestra Code` or `ctrl+enter` (`cmd+enter` on macOS) for ORC code and `Csound: Evaluate Score Code` for SCO code. 
+
 ## Requirements
 
 You must have Csound properly configured on your system so you can use it on the comand line.
@@ -25,6 +27,8 @@ You must have Csound properly configured on your system so you can use it on the
 | `csound.executable`         | `"csound"`    | The csound executable                                                                                                                       |
 | csound.playArgs             | `[ "-odac" ]` | Arguments to csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
+| `csound.UDPAddrses` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
+| `csound.UDPPort` | `10000`       |  Port to send live coding evaluations over UDP.                                                                                    |
 
 ## Known Issues
 
@@ -33,23 +37,26 @@ ORC to a SCO file (or SCO to an ORC file) will need to be implemented before the
 
 ## Release Notes
 
+### 0.3.0
+
+* Added live-coding commands to evaluate ORC and SCO code by sending to Csound over UDP. 
+
 ### 0.2.3
 
-Don't switch focus to output window when playing a CSD file. `alt+escape` only kills CSound subprocesses when focus is in a
-CSD text editor window (for better compatibility with other modules).
+* Don't switch focus to output window when playing a CSD file. `alt+escape` only kills CSound subprocesses when focus is in a CSD text editor window (for better compatibility with other modules).
 
 ### 0.2.2
 
-Fix issue when attempting to kill when there are no Csound subprocesses running.
+* Fix issue when attempting to kill when there are no Csound subprocesses running.
 
 ### 0.2.1
 
-Add command to kill any running Csound subprocess. Kill any Csound process on exiting from VSCode.
+* Add command to kill any running Csound subprocess. Kill any Csound process on exiting from VSCode.
 
 ### 0.2.0
 
-Added the ability to play CSD files from within VSCode.
+* Added the ability to play CSD files from within VSCode.
 
 ### 0.0.1
 
-Alpha: initial release
+* Alpha: initial release

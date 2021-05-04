@@ -16,6 +16,16 @@ export function activate(context: vscode.ExtensionContext) {
         'extension.csoundKillCsoundProcess',
         commands.killCsoundProcess);
     context.subscriptions.push(killCommand);
+
+    const evalOrcCommand = vscode.commands.registerTextEditorCommand(
+        'extension.csoundEvalOrc',
+        commands.evalOrc);
+    context.subscriptions.push(evalOrcCommand);
+
+    const evalScoCommand = vscode.commands.registerTextEditorCommand(
+        'extension.csoundEvalSco',
+        commands.evalSco);
+    context.subscriptions.push(evalScoCommand);
 }
 
 // this method is called when your extension is deactivated
