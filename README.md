@@ -37,6 +37,10 @@ ORC to a SCO file (or SCO to an ORC file) will need to be implemented before the
 
 ## Release Notes
 
+## 0.3.1
+
+* Updated opcode entries to 6.15.0 (synced to Nate Whetsell's Atom language-csound plugin)
+
 ### 0.3.0
 
 * Added live-coding commands to evaluate ORC and SCO code by sending to Csound over UDP. 

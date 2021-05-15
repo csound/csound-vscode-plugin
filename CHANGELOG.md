@@ -4,6 +4,13 @@ All notable changes to the "csound-vscode-plugin" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.3.1
+
+* Updated opcode entries to 6.15.0 (synced to Nate Whetsell's Atom language-csound plugin)
+## 0.3.0
+
+* Added live-coding commands to evaluate ORC and SCO code by sending to Csound over UDP. 
+
 ## 0.2.3
 
 * Playing the contents of the CSD text editor doesn't shift focus to the output window.
