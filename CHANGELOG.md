@@ -4,6 +4,10 @@ All notable changes to the "csound-vscode-plugin" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.4.0
+
+* Updated to vscode 1.60 extension format to work as a Desktop and Web extension. (Play commands currently disabled until WebAudio Csound can be integrated.)
+
 ## 0.3.1
 
 * Updated opcode entries to 6.15.0 (synced to Nate Whetsell's Atom language-csound plugin)

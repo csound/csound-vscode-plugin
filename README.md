@@ -37,6 +37,10 @@ ORC to a SCO file (or SCO to an ORC file) will need to be implemented before the
 
 ## Release Notes
 
+## 0.4.0
+
+* Updated to vscode 1.60 extension format to work as a Desktop and Web extension. (Play commands currently disabled until WebAudio Csound can be integrated.)
+
 ## 0.3.1
 
 * Updated opcode entries to 6.15.0 (synced to Nate Whetsell's Atom language-csound plugin)
