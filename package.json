@@ -14,11 +14,28 @@
         "onCommand:extension.csoundPlayActiveDocument",
         "onCommand:extension.csoundKillCsoundProcess",
         "onCommand:extension.csoundEvalOrc",
-        "onCommand:extension.csoundEvalSco"
+        "onCommand:extension.csoundEvalSco",
+        "onView:csound.webviewCsound"
     ],
     "main": "./dist/extension.js",
     "browser": "./dist/web/extension.js",
     "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "csound-explorer",
+                    "title": "Csound",
+                    "icon": "resources/csound_icon.svg"
+                }
+            ]
+        },
+        "views" : {
+            "csound-explorer" : [{
+                "type": "webview",
+                "id": "csound.webviewCsound",
+                "name": "Csound Processes"
+            }]
+        },
         "commands": [
             {
                 "command": "extension.csoundPlayActiveDocument",
