@@ -2,7 +2,7 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.60.0"
@@ -39,7 +39,7 @@
         "commands": [
             {
                 "command": "extension.csoundPlayActiveDocument",
-                "title": "Csound: Play Active CSD Document"
+                "title": "Csound: Play Active Document"
             },
             {
                 "command": "extension.csoundKillCsoundProcess",
@@ -143,18 +143,24 @@
             {
                 "command": "extension.csoundPlayActiveDocument",
                 "key": "alt+.",
-                "when": "editorLangId == csound-csd && editorFocus"
+                "when": "editorFocus"
             },
             {
                 "command": "extension.csoundKillCsoundProcess",
                 "key": "alt+escape",
-                "when": "editorLangId == csound-csd && editorFocus"
+                "when": "editorFocus"
             },
             {
                 "command": "extension.csoundEvalOrc",
                 "key": "ctrl+enter",
                 "mac": "cmd+enter",
                 "when": "editorTextFocus"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "csound-csd",
+                "path": "./snippets/csd-snippets.json"
             }
         ]
     },
@@ -179,15 +185,15 @@
         "@typescript-eslint/parser": "^4.31.1",
         "@vscode/test-electron": "^1.6.2",
         "@vscode/test-web": "^0.0.8",
-		"assert": "^2.0.0",
+        "assert": "^2.0.0",
         "eslint": "^7.32.0",
         "glob": "^7.1.7",
         "mocha": "^9.1.1",
-		"process": "^0.11.10",
+        "process": "^0.11.10",
         "ts-loader": "^9.2.5",
         "typescript": "^4.4.3",
         "webpack": "^5.52.1",
-        "webpack-cli": "^4.8.0"
+        "webpack-cli": "^4.9.0"
     },
     "repository": {
         "type": "git",

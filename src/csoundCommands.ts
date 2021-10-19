@@ -14,12 +14,9 @@ const processMap: { [pid: number]: cp.ChildProcess | undefined } = {};
 export async function playActiveDocument(textEditor: vscode.TextEditor) {
     const config = vscode.workspace.getConfiguration("csound");
     const document = textEditor.document;
-    // Currently only play csd files.
-    // We need to figure out how to find matching .sco for .orc
-    // (or .orc for .sco) before we can play those.
-    if (document.languageId !== "csound-csd") {
-        return;
-    }
+    // Currently plays csd files
+    // or orc/sco file pair in the same folder with the same basename
+
     if (document.isDirty) {
         if (!config.get("saveSilentlyOnPlay")) {
             const selection = await saveToPlayDialog();
@@ -37,7 +34,19 @@ export async function playActiveDocument(textEditor: vscode.TextEditor) {
     // We need to clone the args array because if we don't, when we push the filename on, it
     // will actually go into the config in memory, and be in the args of our next syntax check.
     const args: string[] = [...config.get("playArgs", [])];
-    args.push(document.fileName);
+
+    if (document.languageId === "csound-orc" || document.languageId === "csound-sco") {
+        const baseName = document.fileName.substring(0, document.fileName.length - 4);
+        args.push(baseName + ".orc");
+        args.push(baseName + ".sco");
+    }
+    else if (document.languageId === "csound-csd") {
+        args.push(document.fileName);
+    }
+    else {
+        return;
+    }
+
     const options = { cwd: path.dirname(document.fileName) };
 
     output.clear();

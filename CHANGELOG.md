@@ -3,6 +3,10 @@
 All notable changes to the "csound-vscode-plugin" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## 0.5.0
+* Can now play from ORC/SCO pair, associating to the file from the currently-active editor window a file contained in the same folder with the same name but opposite extension.
+
+* Added CSD barebone as snippet, use the keyword `barebone` to insert the template code in your CSD file. 
 
 ## 0.4.0
 

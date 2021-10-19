@@ -9,10 +9,10 @@ Program currently provides:
 
 * Syntax Highlighting for Csound .orc and .udo files
 
-* Play the CSD file in the currently-active editor window by choosing `Csound: Play Active CSD Document`
+* Play the file in the currently-active editor window by choosing `Csound: Play Active Document`
  from the command palette or using the `alt+.` shortcut. To kill a playing Csound subprocess, choose
  `Csound: Terminate any running csound subprocess` from the command palette or use the `alt+escape` shortcut
- while the focus is still in a CSD text editor window.
+ while the focus is still in a Csound text editor window.
 
  * Evaluate code at runtime (live coding) using `Csound: Evaluate Orchestra Code` or `ctrl+enter` (`cmd+enter` on macOS) for ORC code and `Csound: Evaluate Score Code` for SCO code. 
 
@@ -32,10 +32,14 @@ You must have Csound properly configured on your system so you can use it on the
 
 ## Known Issues
 
-Currently this extension can only play CSD files from the currently-active editor window. A method of associating the appropriate
-ORC to a SCO file (or SCO to an ORC file) will need to be implemented before these are playable inside of VSCode.
+None.
 
 ## Release Notes
+
+## 0.5.0
+* Can now play from ORC/SCO pair, associating to the file from the currently-active editor window a file contained in the same folder with the same name but opposite extension.
+
+* Added CSD barebone as snippet, use the keyword `barebone` to insert the template code in your CSD file. 
 
 ## 0.4.0
 

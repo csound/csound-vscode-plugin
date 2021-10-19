@@ -1,0 +1,28 @@
+{
+    "barebone": {
+        "prefix": "barebone",
+        "body": [
+          "<CsoundSynthesizer>",
+          ";all code relating to Csound should be encapsulated between",
+          ";<CsoundSynthesizer> and </CsoundSynthesizer>",
+          "    <CsOptions>",
+          "        ;this section tells Csound how to interact",
+          "        ;with various devices and hardware",
+          "        ",
+          "    </CsOptions>",
+          "",
+          "    <CsInstruments>",
+          "        ;this section contains instrument definitions",
+          "        ",
+          "    </CsInstruments>",
+          "",
+          "    <CsScore>",
+          "        ;this section tells Csound when and how to perform instruments",
+          "        ;defined in the CsInstruments section above.",
+          "        ",
+          "    </CsScore>",
+          "</CsoundSynthesizer>"
+        ],
+        "description": "Csound .csd file barebone"
+      }
+}
