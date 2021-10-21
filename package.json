@@ -14,7 +14,8 @@
         "onCommand:extension.csoundPlayActiveDocument",
         "onCommand:extension.csoundKillCsoundProcess",
         "onCommand:extension.csoundEvalOrc",
-        "onCommand:extension.csoundEvalSco"
+        "onCommand:extension.csoundEvalSco",
+        "onLanguage:csound-csd"
     ],
     "main": "./dist/extension.js",
     "browser": "./dist/web/extension.js",
@@ -138,6 +139,12 @@
                 "key": "ctrl+enter",
                 "mac": "cmd+enter",
                 "when": "editorTextFocus"
+            },
+            {
+                "command": "extension.csoundFormat",
+                "key": "ctrl+shift+i",
+                "mac": "cmd+shift+i",
+                "when": "editorFocus"
             }
         ],
         "snippets": [

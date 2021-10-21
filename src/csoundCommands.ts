@@ -142,3 +142,10 @@ export async function evalSco(textEditor: vscode.TextEditor) {
     socket.send("$" + text, port, address);
     flash(textEditor, new vscode.Range(from, to));
 }
+
+export class GoDocumentFormatter implements vscode.DocumentFormattingEditProvider {
+    public provideDocumentFormattingEdits(document: vscode.TextDocument):
+        Thenable<vscode.TextEdit[]> {
+            return Promise.resolve([]);
+    }
+}
