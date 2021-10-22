@@ -31,14 +31,34 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.languages.registerDocumentFormattingEditProvider('csound-csd', {
         provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
-            let text = document.getText();
-            // Replace all commas without a following space or with more than one with a single space
-            text = text.replace(/(,(?![ ])|,[ ]{2,})/g, ', ');
-            // Replace all space before instr headers with a single tab
-            text = text.replace(/[ ]{0,}instr/g, '\tinstr');
-            // Replace all space before instr footers with a single tab
-            text = text.replace(/[ ]{0,}endin/g, '\endin');
-            return [vscode.TextEdit.replace(fullRange(document), text)];
+            let changes: vscode.TextEdit[] = [];
+            let section : "OPTIONS" | "INSTRUMENTS" | "SCORE" | "EMPTY" = "EMPTY";
+            for(let i = 0; i < document.lineCount; i++) {
+                const line = document.lineAt(i);
+                switch(true){
+                    case line.text.includes("<CsOptions>"):
+                        section = "OPTIONS";
+                        break;
+                    case line.text.includes("<CsInstruments>"):
+                        section = "INSTRUMENTS";
+                        break;
+                    case line.text.includes("</"):
+                        section = "EMPTY";
+                        break;
+                }
+                switch(section){
+                    case "OPTIONS":
+                        changes.push(new vscode.TextEdit(line.range, line.text.replace(/\s/g, "")));
+                        break;
+                    case "INSTRUMENTS":
+                        changes.push(new vscode.TextEdit(line.range, line.text.replace(/(,(?![ ])|,[ ]{2,})/g, ', ')));
+                        break;
+                    case "EMPTY":
+                    default:
+                        break;
+                } 
+            }        
+            return changes;
         }
     });
 
