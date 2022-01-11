@@ -18,14 +18,14 @@ Program currently provides:
 
 ## Requirements
 
-You must have Csound properly configured on your system so you can use it on the comand line.
+You must have Csound properly configured on your system so you can use it on the command line.
 
 ## Extension Settings
 
 | setting                     | default       | description                                                                                                                                 |
 | --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `csound.executable`         | `"csound"`    | The csound executable                                                                                                                       |
-| csound.playArgs             | `[ "-odac" ]` | Arguments to csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
+| `csound.executable`         | `"csound"`    | The Csound executable                                                                                                                       |
+| `csound.playArgs`           | `[ "-odac" ]` | Arguments to give to Csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
 | `csound.UDPAddrses` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
 | `csound.UDPPort` | `10000`       |  Port to send live coding evaluations over UDP.                                                                                    |
@@ -55,7 +55,7 @@ None.
 
 ### 0.2.3
 
-* Don't switch focus to output window when playing a CSD file. `alt+escape` only kills CSound subprocesses when focus is in a CSD text editor window (for better compatibility with other modules).
+* Don't switch focus to output window when playing a CSD file. `alt+escape` only kills Csound subprocesses when focus is in a CSD text editor window (for better compatibility with other modules).
 
 ### 0.2.2
 
