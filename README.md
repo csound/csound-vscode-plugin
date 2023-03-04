@@ -20,14 +20,18 @@ Program currently provides:
 
 You must have Csound properly configured on your system so you can use it on the comand line.
 
+## Live Coding
+
+Live coding with csound-vscode-plugin requires Csound to use UDP server mode listening to the port given in settings (by default, port 10000). Csound itself must be configured to listen to the matching port that the plugin will use. This can be done per-project by adding `--port=10000` to the CsOptions of the project's CSD, or done for every project by adding the above flag to the `csound.playArgs` settings. (Caution: Unless all of your Csound work is live coding, adding the --port flag may cause your project to run indefinitely if the project was not designed for live coding.)
+
 ## Extension Settings
 
 | setting                     | default       | description                                                                                                                                 |
 | --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `csound.executable`         | `"csound"`    | The csound executable                                                                                                                       |
-| csound.playArgs             | `[ "-odac" ]` | Arguments to csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
+| `csound.playArgs`             | `[ "-odac" ]` | Arguments to csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
-| `csound.UDPAddrses` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
+| `csound.UDPAddress` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
 | `csound.UDPPort` | `10000`       |  Port to send live coding evaluations over UDP.                                                                                    |
 
 ## Known Issues
@@ -35,6 +39,10 @@ You must have Csound properly configured on your system so you can use it on the
 None.
 
 ## Release Notes
+
+## Next
+
+* Updated README for information on using --port=10000 flag for live coding
 
 ## 0.5.0
 * Can now play from ORC/SCO pair, associating to the file from the currently-active editor window a file contained in the same folder with the same name but opposite extension.

@@ -3,6 +3,11 @@
 All notable changes to the "csound-vscode-plugin" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+
+## Next
+
+* Updated README for information on using --port=10000 flag for live coding
+
 ## 0.5.0
 * Can now play from ORC/SCO pair, associating to the file from the currently-active editor window a file contained in the same folder with the same name but opposite extension.
 
