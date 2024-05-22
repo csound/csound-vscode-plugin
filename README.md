@@ -42,6 +42,8 @@ None.
 
 ## Next
 
+* Adds support for folding for #region / #endregion comments 
+
 * Updated README for information on using --port=10000 flag for live coding
 
 ## 0.5.0
