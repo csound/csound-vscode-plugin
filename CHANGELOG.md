@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Next
 
+## 0.5.2 
+
+* Adds .instr as file extension for ORC syntax highlighting
+
 ## 0.5.1 
 
 * Adds support for folding for #region / #endregion comments 
