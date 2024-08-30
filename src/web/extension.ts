@@ -9,6 +9,15 @@ export function activate(context: vscode.ExtensionContext) {
 	const notYetImplementedForWeb = () => {
 		vscode.window.showInformationMessage("This command has not yet been reimplemented for the web.");
 	};
+
+    class GoDocumentFormatter implements vscode.DocumentFormattingEditProvider {
+        public provideDocumentFormattingEdits(document: vscode.TextDocument):
+            Thenable<vscode.TextEdit[]> {
+        return Promise.resolve([]);
+        }
+    }
+    
+
     // play command
     const playCommand = vscode.commands.registerTextEditorCommand(
         'extension.csoundPlayActiveDocument', notYetImplementedForWeb
@@ -29,6 +38,11 @@ export function activate(context: vscode.ExtensionContext) {
         'extension.csoundEvalSco',
         notYetImplementedForWeb);
     context.subscriptions.push(evalScoCommand);
+
+    const formatCommand = vscode.languages.registerDocumentFormattingEditProvider(
+        'extension.csoundFormat', new GoDocumentFormatter());
+
+    context.subscriptions.push(formatCommand);
 }
 
 // this method is called when your extension is deactivated
