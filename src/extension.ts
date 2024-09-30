@@ -7,76 +7,78 @@ import { XMLParser } from 'fast-xml-parser';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log("Csound's vscode plugin is now active!");
-    function parseXMLAndGenerateCompletions(xmlString: string) {
-        // Create a DOM parser
+
+    function parseXMLAndGenerateCompletions(xmlString: string): vscode.CompletionItem[] {
+        // Create a parser instance
         const parser = new XMLParser();
-        const xmlDoc = parser.parse(xmlString);
-    
+        const xmlDoc = parser.parse(xmlString); // Parse the XML string to a JS object
+
+        // Log the parsed XML structure for debugging
+        console.log(JSON.stringify(xmlDoc, null, 2));
+
         // Create an array to store completions
-        const completions = [];
-    
-        // Extract all categories
-        const categories = xmlDoc.getElementsByTagName("category");
-    
+        const completions: vscode.CompletionItem[] = [];
+
+        // Extract all categories from the parsed XML object
+        const categories = xmlDoc.categories?.category || []; // Handle case where categories might not exist
+
         // Loop over each category
-        for (let i = 0; i < categories.length; i++) {
-            const category = categories[i];
-            const categoryName = category.getAttribute("name");
-    
+        for (const category of categories) {
+            const categoryName = category.name; // Extract category name
+
             // Extract all opcodes within this category
-            const opcodes = category.getElementsByTagName("opcode");
-    
+            const opcodes = category.opcode || []; // Handle case where opcode might not exist
+
             // Loop over each opcode within the category
-            for (let j = 0; j < opcodes.length; j++) {
-                const opcode = opcodes[j];
-    
-                // Extract opcode name and description
-                const synopsisElements = opcode.getElementsByTagName("synopsis");
-                const description = opcode.getElementsByTagName("desc")[0].textContent;
-    
+            for (const opcode of opcodes) {
+                const description = opcode.desc || ""; // Extract description
+                const synopsisElements = opcode.synopsis || []; // Access synopsis elements
+
                 // Loop through multiple synopsis elements if they exist
-                for (let k = 0; k < synopsisElements.length; k++) {
-                    const synopsisElement = synopsisElements[k];
-                    const opcodeName = synopsisElement.getElementsByTagName("opcodename")[0].textContent;
-                    const signature = synopsisElement.textContent.trim();
-    
-                    // Create a completion object
-                    const completion = {
-                        label: opcodeName,
-                        kind: "Function", // Assuming these are all function-like completions
-                        detail: `${categoryName}: ${signature}`,
-                        documentation: description
-                    };
-    
+                for (const synopsisElement of synopsisElements) {
+                    const opcodeName = synopsisElement.opcodename || ""; // Extract opcode name
+
+                    // Extract signature, which is the text content excluding the opcode name
+                    const signature = synopsisElement['#text']?.replace(opcodeName, "").trim() || "";
+
+                    // Create a VS Code CompletionItem
+                    const completion = new vscode.CompletionItem(opcodeName, vscode.CompletionItemKind.Function);
+                    completion.detail = `${categoryName}: ${opcodeName} ${signature}`; // Set the detail (opcode + arguments)
+                    completion.documentation = new vscode.MarkdownString(description); // Set description as documentation
+                    completion.command = { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions...' };
+
                     // Add the completion to the array
                     completions.push(completion);
                 }
             }
         }
-    
+
         // Return the generated completions
         return completions;
     }
 
-    const provider = vscode.languages.registerCompletionItemProvider('javascript', {
-        provideCompletionItems: (document: vscode.TextDocument, position: vscode.Position) => {
-            // Load completions from XML (return a promise)
-            const filePath = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'src', 'resources', 'opcodes.xml');
-            const fileData = vscode.workspace.fs.readFile(filePath);
-            return new Promise((resolve, reject) => {
-                try {                    
-                    const xmlString = fileData.toString(); // Convert the Buffer to a string
-                    const completionItems = parseXMLAndGenerateCompletions(xmlString); // Call your function
-                    return completionItems;
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        }
-    });
 
-    context.subscriptions.push(provider);
-    
+    const extensionUri = context.extensionUri;
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csound-csd', {
+        provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+
+            const filePath = vscode.Uri.joinPath(extensionUri, 'src', 'opcodes.xml');
+            // Read the file asynchronously
+            const fileData = vscode.workspace.fs.readFile(filePath);
+            // Convert the Buffer to a string
+            const xmlString = fileData.toString();
+            const completionItems = parseXMLAndGenerateCompletions(xmlString);
+
+            completionItems.forEach((item) => {
+                let i = item;
+            });
+            // const simpleCompletion = new vscode.CompletionItem('Hello World!');
+            // simpleCompletion.detail = 'Inserts Hello World';
+            return completionItems;
+        }
+    }, ''));
+
+
     // play command
     const playCommand = vscode.commands.registerTextEditorCommand(
         'extension.csoundPlayActiveDocument',
@@ -97,6 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
         'extension.csoundEvalSco',
         commands.evalSco);
     context.subscriptions.push(evalScoCommand);
+
 }
 
 // this method is called when your extension is deactivated
