@@ -8,73 +8,120 @@ import { XMLParser } from 'fast-xml-parser';
 export function activate(context: vscode.ExtensionContext) {
     console.log("Csound's vscode plugin is now active!");
 
-    function parseXMLAndGenerateCompletions(xmlString: string): vscode.CompletionItem[] {
-        // Create a parser instance
-        const parser = new XMLParser();
-        const xmlDoc = parser.parse(xmlString); // Parse the XML string to a JS object
-
-        // Log the parsed XML structure for debugging
-        console.log(JSON.stringify(xmlDoc, null, 2));
-
-        // Create an array to store completions
-        const completions: vscode.CompletionItem[] = [];
-
-        // Extract all categories from the parsed XML object
-        const categories = xmlDoc.categories?.category || []; // Handle case where categories might not exist
-
-        // Loop over each category
-        for (const category of categories) {
-            const categoryName = category.name; // Extract category name
-
-            // Extract all opcodes within this category
-            const opcodes = category.opcode || []; // Handle case where opcode might not exist
-
-            // Loop over each opcode within the category
-            for (const opcode of opcodes) {
-                const description = opcode.desc || ""; // Extract description
-                const synopsisElements = opcode.synopsis || []; // Access synopsis elements
-
-                // Loop through multiple synopsis elements if they exist
-                for (const synopsisElement of synopsisElements) {
-                    const opcodeName = synopsisElement.opcodename || ""; // Extract opcode name
-
-                    // Extract signature, which is the text content excluding the opcode name
-                    const signature = synopsisElement['#text']?.replace(opcodeName, "").trim() || "";
-
-                    // Create a VS Code CompletionItem
-                    const completion = new vscode.CompletionItem(opcodeName, vscode.CompletionItemKind.Function);
-                    completion.detail = `${categoryName}: ${opcodeName} ${signature}`; // Set the detail (opcode + arguments)
-                    completion.documentation = new vscode.MarkdownString(description); // Set description as documentation
-                    completion.command = { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions...' };
-
-                    // Add the completion to the array
-                    completions.push(completion);
-                }
-            }
-        }
-
-        // Return the generated completions
-        return completions;
+    // Define the structure of the opcode object
+    interface Opcode {
+        label: string;
+        description: string;
     }
 
 
+    // Function to concatenate text properties from synopsis
+    function concatenateTexts(synopsis: any): string {
+        // Check if synopsis is an array or an object and handle accordingly
+        if (Array.isArray(synopsis)) {
+            return synopsis.map(item => item["#text"]).join(' '); // Join with a space
+        } else if (synopsis && typeof synopsis === 'object') {
+            return synopsis["#text"] || ''; // Return the text if it's a single object
+        }
+        return ''; // Default return if neither
+    }
+
+    // Function to parse the XML content and generate the desired array of objects
+    function parseOpcodes(xmlContent: string): Opcode[] {
+        // Initialize the XML parser
+        const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: "",
+            parseNodeValue: true,
+            trimValues: true,
+        });
+
+        try {
+            // Parse the XML string into a JavaScript object
+            const jsonObj = parser.parse(xmlContent);
+
+            // Check if parsing was successful
+            if (!jsonObj || !jsonObj.opcodes || !jsonObj.opcodes.category) {
+                console.error('Failed to parse XML content or structure is unexpected.');
+                return [];
+            }
+
+            // Array to store the results
+            const opcodesArray: Opcode[] = [];
+
+            // Access the opcodes from the parsed JSON object
+            const opcodes = jsonObj.opcodes.category.flatMap((category: any) => category.opcode || []);
+
+            // Use a Map to track duplicates and accumulate descriptions with syntax
+            const opcodeMap = new Map<string, Opcode>();
+
+            // Loop through each opcode object and extract data
+            for (const opcode of opcodes) {
+                // Get the description (within <desc> tag)
+                const description = opcode.desc || '';
+
+                // Check if synopsis exists
+                const synopsisList = opcode.synopsis || [];
+                const synopses = Array.isArray(synopsisList) ? synopsisList : [synopsisList]; // Ensure it's an array
+
+                // Loop through each synopsis to extract opcodename and create syntax
+                for (const synopsis of synopses) {
+                    const opcodename = synopsis?.opcodename || '';
+
+                    if (opcodename) {
+                        // Create a new syntax string using the concatenateTexts function
+                        const syntaxString = concatenateTexts(synopsis);
+
+
+                        // If this opcodename already exists in the map, append the new syntax to the description
+                        if (opcodeMap.has(opcodename)) {
+                            const existingOpcode = opcodeMap.get(opcodename)!;
+                            existingOpcode.description += `\n${syntaxString}`;
+                        } else {
+                            opcodeMap.set(opcodename, {
+                                label: `${opcodename}`,
+                                description: `${description}\n\n${syntaxString}`
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Convert the map to an array
+            opcodesArray.push(...opcodeMap.values());
+
+            console.log(`Parsed ${opcodesArray.length} opcodes.`);
+            return opcodesArray;
+
+        } catch (error) {
+            console.error('Error parsing XML:', error);
+            return [];
+        }
+    }
+
     const extensionUri = context.extensionUri;
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider('csound-csd', {
-        provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+        async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
 
             const filePath = vscode.Uri.joinPath(extensionUri, 'src', 'opcodes.xml');
             // Read the file asynchronously
-            const fileData = vscode.workspace.fs.readFile(filePath);
-            // Convert the Buffer to a string
-            const xmlString = fileData.toString();
-            const completionItems = parseXMLAndGenerateCompletions(xmlString);
-
-            completionItems.forEach((item) => {
-                let i = item;
+            // Read the file asynchronously and await the result
+            const fileData = await vscode.workspace.fs.readFile(filePath);
+            const completions: vscode.CompletionItem[] = [];
+            // Convert the Buffer (Uint8Array) to a string
+            const xmlString = Buffer.from(fileData).toString('utf-8');
+            let opcodes = parseOpcodes(xmlString);
+            opcodes.forEach((item) => {
+                const completion = new vscode.CompletionItem(item.label, vscode.CompletionItemKind.Function);
+                completion.detail = `${item.label}: ${item.description}`;  // Set the detail (opcode + arguments)
+                // completion.documentation = new vscode.MarkdownString().appendCodeblock(item.syntax, 'csound');  // Set the documentation
+                completions.push(completion);
             });
-            // const simpleCompletion = new vscode.CompletionItem('Hello World!');
+
+            //const completionItems = parseXMLAndGenerateCompletions(xmlString);
+
             // simpleCompletion.detail = 'Inserts Hello World';
-            return completionItems;
+            return completions;
         }
     }, ''));
 
