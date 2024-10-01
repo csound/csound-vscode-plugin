@@ -66,6 +66,11 @@
                     "type": "number",
                     "default": 10000,
                     "description": "Port to send live coding evaluations over UDP."
+                },
+                "csound.showHints": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Displays syntax hints."
                 }
             }
         },
