@@ -27,21 +27,26 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Function to parse the XML content and generate the desired array of objects
-    function parseOpcodes(xmlContent: string): Opcode[] {
+    async function parseOpcodes(xmlContent: string): Promise<Opcode[]> {
         // Initialize the XML parser
         const parser = new XMLParser({
-            ignoreAttributes: false,
-            attributeNamePrefix: "",
-            parseNodeValue: true,
-            trimValues: true,
+            preserveOrder: true
         });
 
         try {
             // Parse the XML string into a JavaScript object
-            const jsonObj = parser.parse(xmlContent);
+            const jsonObj = parser.parse(xmlContent)[1];
 
+            // Create a new text document
+            // const document = await vscode.workspace.openTextDocument({
+            //     content: JSON.stringify(jsonObj, null, 2), // Convert the JSON object to a string
+            //     language: 'plaintext' // You can change this to any language you prefer
+            // });
+
+            // Show the new document in a new editor tab
+            // await vscode.window.showTextDocument(document);
             // Check if parsing was successful
-            if (!jsonObj || !jsonObj.opcodes || !jsonObj.opcodes.category) {
+            if (!jsonObj || !jsonObj.opcodes || !jsonObj.opcodes[0].category) {
                 console.error('Failed to parse XML content or structure is unexpected.');
                 return [];
             }
@@ -49,47 +54,65 @@ export function activate(context: vscode.ExtensionContext) {
             // Array to store the results
             const opcodesArray: Opcode[] = [];
 
+            console.log(`Found ${jsonObj.opcodes.length} categories.`);
             // Access the opcodes from the parsed JSON object
-            const opcodes = jsonObj.opcodes.category.flatMap((category: any) => category.opcode || []);
+            jsonObj.opcodes.forEach((opcode: any) => {
+                const opcodes = opcode.category.flatMap((category: any) => category.opcode || []);
 
-            // Use a Map to track duplicates and accumulate descriptions with syntax
-            const opcodeMap = new Map<string, Opcode>();
+                // Use a Map to track duplicates and accumulate descriptions with syntax
+                const opcodeMap = new Map<string, Opcode>();
 
-            // Loop through each opcode object and extract data
-            for (const opcode of opcodes) {
-                // Get the description (within <desc> tag)
-                const description = opcode.desc || '';
+                // Loop through each opcode object and extract data
+                for (const opcode of opcodes) {
+                    // Get the description (within <desc> tag)
+                    const description = opcode.desc || '';
 
-                // Check if synopsis exists
-                const synopsisList = opcode.synopsis || [];
-                const synopses = Array.isArray(synopsisList) ? synopsisList : [synopsisList]; // Ensure it's an array
+                    // Check if synopsis exists
+                    const synopsisList = opcode.synopsis || [];
+                    const synopses = Array.isArray(synopsisList) ? synopsisList : [synopsisList]; // Ensure it's an array
 
-                // Loop through each synopsis to extract opcodename and create syntax
-                for (const synopsis of synopses) {
-                    const opcodename = synopsis?.opcodename || '';
+                    // Loop through each synopsis to extract opcodename and create syntax
+                    for (const synopsis of synopses) {
+                        const opcodeName = synopsis?.opcodename || '';
+                        if (opcodeName) {
+                            if (opcodeName[0]["#text"] === "oscili") {
+                                console.log(`Found opcode: ${JSON.stringify(opcodeName, null, 2)}`);
+                                console.log(`Synopsis: ${JSON.stringify(synopsisList, null, 2)}`);
+                            }
+                            let syntaxString = '';
+                            // Extract the first text element
+                            if(synopsisList.length > 3){
+                            const firstText = synopsisList[0]["#text"];
 
-                    if (opcodename) {
-                        // Create a new syntax string using the concatenateTexts function
-                        const syntaxString = concatenateTexts(synopsis);
+                            // // Extract the opcodename text
+                            const opcodeNameText = synopsisList[1].opcodename[0]["#text"];
 
+                            // // Extract the second text element
+                            const secondText = synopsisList[2]["#text"];
 
-                        // If this opcodename already exists in the map, append the new syntax to the description
-                        if (opcodeMap.has(opcodename)) {
-                            const existingOpcode = opcodeMap.get(opcodename)!;
-                            existingOpcode.description += `\n${syntaxString}`;
-                        } else {
-                            opcodeMap.set(opcodename, {
-                                label: `${opcodename}`,
-                                description: `${description}\n\n${syntaxString}`
-                            });
+                            // // Create the new string
+                            syntaxString = `${firstText} ${opcodeNameText} ${secondText}`;
+                            // // Create a new syntax string using the concatenateTexts function
+                            // const syntaxString = 'Syntax: ';;
+                            }
+
+                            // If this opcodeName already exists in the map, append the new syntax to the description
+                            if (opcodeMap.has(opcodeName)) {
+                                const existingOpcode = opcodeMap.get(opcodeName)!;
+                                existingOpcode.description += `\n${syntaxString}`;
+                            } else {
+                                opcodeMap.set(opcodeName, {
+                                    label: `${opcodeName[0]["#text"]}`,
+                                    description: `${description}\n\n${syntaxString}`
+                                });
+                            }
                         }
                     }
                 }
-            }
 
-            // Convert the map to an array
-            opcodesArray.push(...opcodeMap.values());
-
+                // Convert the map to an array
+                opcodesArray.push(...opcodeMap.values());
+            });
             console.log(`Parsed ${opcodesArray.length} opcodes.`);
             return opcodesArray;
 
@@ -111,7 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Convert the Buffer (Uint8Array) to a string
             const xmlString = Buffer.from(fileData).toString('utf-8');
             let opcodes = parseOpcodes(xmlString);
-            opcodes.forEach((item) => {
+            (await opcodes).forEach((item) => {
                 const completion = new vscode.CompletionItem(item.label, vscode.CompletionItemKind.Function);
                 completion.detail = `${item.label}: ${item.description}`;  // Set the detail (opcode + arguments)
                 // completion.documentation = new vscode.MarkdownString().appendCodeblock(item.syntax, 'csound');  // Set the documentation
