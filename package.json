@@ -2,10 +2,10 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.5.2",
+    "version": "0.6.0",
     "publisher": "kunstmusik",
     "engines": {
-        "vscode": "^1.60.0"
+        "vscode": "^1.75.0"
     },
     "categories": [
         "Programming Languages"
