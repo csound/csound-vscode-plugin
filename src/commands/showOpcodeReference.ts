@@ -16,26 +16,22 @@ export const showOpcodeReference = async () => {
   console.log(`Opcode: ${opcode}`); // Log the opcode for debugging
 
   const config = vscode.workspace.getConfiguration("csound");
-  const customPath =
-    config.get<string>("htmlFilePath") === "Use default location"
-      ? ""
-      : config.get<string>("htmlFilePath");
+  let htmlFilePath = config.get<string>("htmlFilePath");
   const osPlatform = process.platform;
-  let defaultPath: string;
 
-  if (!customPath) {
+  if (!htmlFilePath) {
     if (osPlatform === "win32") {
-      defaultPath = "C:\\Program Files\\Csound6_x64\\doc\\manual"; // Default path for Windows
-    } else if (osPlatform === "darwin") {
-      defaultPath = "/path/to/html"; // Default path for macOS
-    } else {
-      defaultPath = "html"; // Default for other OS (like Linux)
-    }
-  } else {
-    defaultPath = customPath; // Use user-defined path if available
-  }
+      htmlFilePath = "C:\\Program Files\\Csound6_x64\\doc\\manual"; // Default path for Windows
+    } 
+    // TODO: Add default paths for macOS and Linux
+    // else if (osPlatform === "darwin") {
+    //   defaultPath = "/path/to/html"; // Default path for macOS
+    // } else {
+    //   defaultPath = "html"; // Default for other OS (like Linux)
+    // }
+  }   
   // Construct the URI for the HTML file
-  const htmlFileUri = vscode.Uri.file(`${defaultPath}/${opcode}.html`);
+  const htmlFileUri = vscode.Uri.file(`${htmlFilePath}/${opcode}.html`);
 
   try {
     // Check if the file exists before reading

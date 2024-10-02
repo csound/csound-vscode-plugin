@@ -5,9 +5,13 @@ A Csound language plugin for Visual Studio Code.
 
 ## Features
 
-Program currently provides:
+csound-vscode-plugin currently provides:
 
 * Syntax Highlighting for Csound .orc and .udo files
+
+* Opcode completion with popup hints for opcode arguments
+
+* Show opcode documentation in the editor
 
 * Play the file in the currently-active editor window by choosing `Csound: Play Active Document`
  from the command palette or using the `alt+.` shortcut. To kill a playing Csound subprocess, choose
@@ -33,6 +37,7 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
 | `csound.UDPAddress` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
 | `csound.UDPPort` | `10000`       |  Port to send live coding evaluations over UDP.                                                                                    |
+| `csound.htmlFilePath` | `""`       |  Csound manual root directory on local file system for loading opcode documentation. If empty, defaults to C:\\Program Files\\Csound6_x64\\doc\\manual on Windows. |
 
 ## Known Issues
 
@@ -40,7 +45,9 @@ None.
 
 ## Release Notes
 
-## Next
+## 0.6.0
+
+* Adds support for autocomplete, popup hints for opcode arguments, and showing opcode documentation in the editor.
 
 ## 0.5.2 
 
