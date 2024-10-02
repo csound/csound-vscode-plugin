@@ -10,12 +10,6 @@
     "categories": [
         "Programming Languages"
     ],
-    "activationEvents": [
-        "onCommand:extension.csoundPlayActiveDocument",
-        "onCommand:extension.csoundKillCsoundProcess",
-        "onCommand:extension.csoundEvalOrc",
-        "onCommand:extension.csoundEvalSco"
-    ],
     "main": "./dist/extension.js",
     "browser": "./dist/web/extension.js",
     "contributes": {
@@ -78,7 +72,7 @@
                 },
                 "csound.htmlFilePath": {
                     "type": "string",
-                    "default": "Use default location",
+                    "default": "",
                     "description": "The path to the directory containing HTML opcode files."
                 }
             }
@@ -201,8 +195,5 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/csound/csound-vscode-plugin.git"
-    },
-    "dependencies": {
-        "fast-xml-parser": "^4.5.0"
     }
 }

@@ -4,7 +4,7 @@ import * as path from "path";
 import * as cp from "child_process";
 import * as vscode from "vscode";
 import * as dgram from "dgram";
-import { flash, getEvalText, getScoEvalText } from "./utils"; 
+import { flash, getEvalText, getScoEvalText } from "../utils"; 
 
 const socket = dgram.createSocket("udp4");
 
