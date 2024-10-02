@@ -35,6 +35,10 @@
             {
                 "command": "extension.csoundEvalSco",
                 "title": "Csound: Evaluate Score Code"
+            },
+            {
+                "command": "extension.showOpcodeReference",
+                "title": "Csound: Show Csound help"
             }
         ],
         "configuration": {
@@ -71,6 +75,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Displays syntax hints."
+                },
+                "csound.htmlFilePath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "The path to the directory containing HTML opcode files."
                 }
             }
         },
