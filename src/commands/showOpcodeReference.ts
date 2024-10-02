@@ -22,10 +22,9 @@ export const showOpcodeReference = async () => {
   if (!htmlFilePath) {
     if (osPlatform === "win32") {
       htmlFilePath = "C:\\Program Files\\Csound6_x64\\doc\\manual"; // Default path for Windows
-    } 
-    // TODO: Add default paths for macOS and Linux
-    // else if (osPlatform === "darwin") {
-    //   defaultPath = "/path/to/html"; // Default path for macOS
+    } else if (osPlatform === "darwin") {
+       htmlFilePath = "/Library/Frameworks/CsoundLib64.framework/Versions/6.0/Resources/Manual"; // Default path for macOS
+    }
     // } else {
     //   defaultPath = "html"; // Default for other OS (like Linux)
     // }

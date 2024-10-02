@@ -37,7 +37,7 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
 | `csound.UDPAddress` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
 | `csound.UDPPort` | `10000`       |  Port to send live coding evaluations over UDP.                                                                                    |
-| `csound.htmlFilePath` | `""`       |  Csound manual root directory on local file system for loading opcode documentation. If empty, defaults to C:\\Program Files\\Csound6_x64\\doc\\manual on Windows. |
+| `csound.htmlFilePath` | `""`       |  Csound manual root directory on local file system for loading opcode documentation. If empty, defaults to C:\\Program Files\\Csound6_x64\\doc\\manual on Windows, and /Library/Frameworks/CsoundLib64.framework/Versions/6.0/Resources/Manual on macOS. |
 
 ## Known Issues
 
