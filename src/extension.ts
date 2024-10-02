@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 import * as commands from "./commands/csoundCommands";
 import { showOpcodeReference } from "./commands/showOpcodeReference";
+import opcodesJson from "./opcodes.json";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("Csound's vscode plugin is now active!");
@@ -15,74 +16,73 @@ export function activate(context: vscode.ExtensionContext) {
 
   //add autocomplete for opcodes
   const extensionUri = context.extensionUri;
+  const completionItemProvider = {
+    async provideCompletionItems(
+      document: vscode.TextDocument,
+      position: vscode.Position,
+      token: vscode.CancellationToken,
+      context: vscode.CompletionContext
+    ) {
+      const config = vscode.workspace.getConfiguration("csound");
+      const showHints = config.get("showHints") as boolean;
+      const completions: vscode.CompletionItem[] = [];
+      if (!showHints) {
+        return completions;
+      }
+      opcodesJson.opcodes.forEach((categoryObj: any) => {
+        categoryObj.opcodes.forEach((opcodeObj: any) => {
+          // Create a new CompletionItem
+          let completionItem = new vscode.CompletionItem(
+            opcodeObj.opcodeName,
+            vscode.CompletionItemKind.Snippet
+          );
+
+          // Set the label to be the opcode name
+          completionItem.label = opcodeObj.opcodeName;
+
+          // Forego detail here, as it is not necessary for the opcode list
+          completionItem.detail = "";
+
+          const formattedSynopsis = formatSynopsisForMarkdown(
+            `**${opcodeObj.opcodeName}**: *${opcodeObj.description}* \n\n` +
+              opcodeObj.synopsis +
+              "\n\n" +
+              opcodeObj.functionalSynopsis
+          );
+          completionItem.documentation = new vscode.MarkdownString(
+            formattedSynopsis
+          );
+
+          // Add the item to the completion list
+          completions.push(completionItem);
+        });
+      });
+
+      return completions;
+      1;
+    },
+  };
+
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(
       "csound-csd",
-      {
-        async provideCompletionItems(
-          document: vscode.TextDocument,
-          position: vscode.Position,
-          token: vscode.CancellationToken,
-          context: vscode.CompletionContext
-        ) {
-          const config = vscode.workspace.getConfiguration("csound");
-          const showHints = config.get("showHints") as boolean;
-          const filePath = vscode.Uri.joinPath(
-            extensionUri,
-            "src",
-            "opcodes.json"
-          );
-          // Read the file asynchronously and await the result
-          const fileData = await vscode.workspace.fs.readFile(filePath);
-          const completions: vscode.CompletionItem[] = [];
-          if (!showHints) {
-            return completions;
-          }
-          // Convert the Buffer (Uint8Array) to a string
-          const jsonString = Buffer.from(fileData).toString("utf-8");
-          const json = JSON.parse(jsonString);
-          json.opcodes.forEach((categoryObj: any) => {
-            categoryObj.opcodes.forEach((opcodeObj: any) => {
-              // Create a new CompletionItem
-              let completionItem = new vscode.CompletionItem(
-                opcodeObj.opcodeName,
-                vscode.CompletionItemKind.Snippet
-              );
-
-              // Set the label to be the opcode name
-              completionItem.label = opcodeObj.opcodeName;
-
-              // Forego detail here, as it is not necessary for the opcode list
-              completionItem.detail = "";
-
-              const formattedSynopsis = formatSynopsisForMarkdown(
-                `**${opcodeObj.opcodeName}**: *${opcodeObj.description}* \n\n` +
-                  opcodeObj.synopsis +
-                  "\n\n" +
-                  opcodeObj.functionalSynopsis
-              );
-              completionItem.documentation = new vscode.MarkdownString(
-                formattedSynopsis
-              );
-
-              // Add the item to the completion list
-              completions.push(completionItem);
-            });
-          });
-
-          return completions;
-          1;
-        },
-      },
+      completionItemProvider,
+      ""
+    )
+  );
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+      "csound-orc",
+      completionItemProvider,
       ""
     )
   );
 
-  const showOpcoeReferenceCommand = vscode.commands.registerCommand(
+  const showOpcodeReferenceCommand = vscode.commands.registerCommand(
     "extension.showOpcodeReference",
     showOpcodeReference
   );
-  context.subscriptions.push(showOpcoeReferenceCommand);
+  context.subscriptions.push(showOpcodeReferenceCommand);
 
   const playCommand = vscode.commands.registerTextEditorCommand(
     "extension.csoundPlayActiveDocument",

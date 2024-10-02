@@ -45,6 +45,10 @@ None.
 
 ## Release Notes
 
+## 0.6.1
+
+* Fix import of opcodes.json
+
 ## 0.6.0
 
 * Adds support for autocomplete, popup hints for opcode arguments, and showing opcode documentation in the editor.
