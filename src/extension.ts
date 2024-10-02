@@ -68,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
         console.log(`Opcode: ${opcode}`); // Log the opcode for debugging
 
         const config = vscode.workspace.getConfiguration('yourExtension');
-        const customPath = config.get<string>('htmlFilePath');
+        const customPath = config.get<string>('htmlFilePath') === "Use default location" ? "" : config.get<string>('htmlFilePath');
         const osPlatform = process.platform;
         let defaultPath: string;
 

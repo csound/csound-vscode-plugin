@@ -78,7 +78,7 @@
                 },
                 "csound.htmlFilePath": {
                     "type": "string",
-                    "default": "",
+                    "default": "Use default location",
                     "description": "The path to the directory containing HTML opcode files."
                 }
             }

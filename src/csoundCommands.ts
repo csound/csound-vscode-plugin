@@ -11,7 +11,6 @@ const socket = dgram.createSocket("udp4");
 let output: vscode.OutputChannel;
 const processMap: { [pid: number]: cp.ChildProcess | undefined } = {};
 
-
 export async function playActiveDocument(textEditor: vscode.TextEditor) {
     const config = vscode.workspace.getConfiguration("csound");
     const document = textEditor.document;
