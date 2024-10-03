@@ -45,6 +45,10 @@ None.
 
 ## Release Notes
 
+## 0.6.3
+
+* Adds support for embedded JSON support for Cabbage section of CSDs 
+
 ## 0.6.2
 
 * Enable opcode completion and hints for web extension 
