@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Next
 
+## 0.6.2
+
+* Enable opcode completion and hints for web extension 
+
 ## 0.6.1
 
 * Fix import of opcodes.json
