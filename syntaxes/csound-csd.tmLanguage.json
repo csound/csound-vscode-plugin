@@ -171,6 +171,7 @@
       },
       "patterns": [
         {
+          "include": "source.json",
           "name": "comment.line.cabbage-gui.csound-document",
           "begin": ";",
           "end": "$",

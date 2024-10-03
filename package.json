@@ -128,7 +128,10 @@
             {
                 "language": "csound-csd",
                 "scopeName": "source.csound.csd",
-                "path": "./syntaxes/csound-csd.tmLanguage.json"
+                "path": "./syntaxes/csound-csd.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.json": "json"
+                }
             }
         ],
         "configurationDefaults": {
