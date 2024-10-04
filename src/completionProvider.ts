@@ -7,6 +7,36 @@ const formatSynopsisForMarkdown = (synopsis: string): string => {
   return synopsis.replace(/\n/g, "  \n");
 };
 
+const fullOpcodeCompletions:Array<vscode.CompletionItem> = [];
+  opcodesJson.opcodes.forEach((categoryObj: any) => {
+  categoryObj.opcodes.forEach((opcodeObj: any) => {
+    // Create a new CompletionItem
+    let completionItem = new vscode.CompletionItem(
+      opcodeObj.opcodeName,
+      vscode.CompletionItemKind.Snippet
+    );
+
+    // Set the label to be the opcode name
+    completionItem.label = opcodeObj.opcodeName;
+
+    // Forego detail here, as it is not necessary for the opcode list
+    completionItem.detail = "";
+
+    const formattedSynopsis = formatSynopsisForMarkdown(
+      `**${opcodeObj.opcodeName}**: *${opcodeObj.description}* \n\n` +
+        opcodeObj.synopsis +
+        "\n\n" +
+        opcodeObj.functionalSynopsis
+    );
+    completionItem.documentation = new vscode.MarkdownString(
+      formattedSynopsis
+    );
+
+    // Add the item to the completion list
+    fullOpcodeCompletions.push(completionItem);
+  });
+});
+
 export const completionItemProvider = {
   async provideCompletionItems(
     document: vscode.TextDocument,
@@ -20,36 +50,7 @@ export const completionItemProvider = {
     if (!showHints) {
       return completions;
     }
-    opcodesJson.opcodes.forEach((categoryObj: any) => {
-      categoryObj.opcodes.forEach((opcodeObj: any) => {
-        // Create a new CompletionItem
-        let completionItem = new vscode.CompletionItem(
-          opcodeObj.opcodeName,
-          vscode.CompletionItemKind.Snippet
-        );
-
-        // Set the label to be the opcode name
-        completionItem.label = opcodeObj.opcodeName;
-
-        // Forego detail here, as it is not necessary for the opcode list
-        completionItem.detail = "";
-
-        const formattedSynopsis = formatSynopsisForMarkdown(
-          `**${opcodeObj.opcodeName}**: *${opcodeObj.description}* \n\n` +
-            opcodeObj.synopsis +
-            "\n\n" +
-            opcodeObj.functionalSynopsis
-        );
-        completionItem.documentation = new vscode.MarkdownString(
-          formattedSynopsis
-        );
-
-        // Add the item to the completion list
-        completions.push(completionItem);
-      });
-    });
-
-    return completions;
-    1;
+    // TODO - filter by word in context
+    return fullOpcodeCompletions;
   },
 };

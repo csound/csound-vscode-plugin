@@ -11,16 +11,8 @@ export function activate(context: vscode.ExtensionContext) {
   //add autocomplete for opcodes
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(
-      "csound-csd",
-      completionItemProvider,
-      ""
-    )
-  );
-  context.subscriptions.push(
-    vscode.languages.registerCompletionItemProvider(
-      "csound-orc",
-      completionItemProvider,
-      ""
+      ["csound-csd", "csound-orc"],
+      completionItemProvider
     )
   );
 
