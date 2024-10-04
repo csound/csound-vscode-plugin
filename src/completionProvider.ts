@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
 import opcodesJson from "./opcodes.json";
-
+import { tokens } from "./extension";
 // Utility function to convert synopsis with proper markdown and newlines
 const formatSynopsisForMarkdown = (synopsis: string): string => {
   // Add two spaces before each newline for single line breaks in Markdown
   return synopsis.replace(/\n/g, "  \n");
 };
 
-const fullOpcodeCompletions:Array<vscode.CompletionItem> = [];
-  opcodesJson.opcodes.forEach((categoryObj: any) => {
+const fullOpcodeCompletions: Array<vscode.CompletionItem> = [];
+opcodesJson.opcodes.forEach((categoryObj: any) => {
   categoryObj.opcodes.forEach((opcodeObj: any) => {
     // Create a new CompletionItem
     let completionItem = new vscode.CompletionItem(
@@ -24,9 +24,9 @@ const fullOpcodeCompletions:Array<vscode.CompletionItem> = [];
 
     const formattedSynopsis = formatSynopsisForMarkdown(
       `**${opcodeObj.opcodeName}**: *${opcodeObj.description}* \n\n` +
-        opcodeObj.synopsis +
-        "\n\n" +
-        opcodeObj.functionalSynopsis
+      opcodeObj.synopsis +
+      "\n\n" +
+      opcodeObj.functionalSynopsis
     );
     completionItem.documentation = new vscode.MarkdownString(
       formattedSynopsis
@@ -50,19 +50,13 @@ export const completionItemProvider = {
       return [];
     }
 
-    // // Get the current line's text
-    // const lineText = document.lineAt(position.line).text;
+    const completionItems = Array.from(tokens).map(word => {
+      const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Text);
+      return item;
+    });
 
-    // // Find the word range at the current position
-    // const wordRange = document.getWordRangeAtPosition(position);
-    // const currentWord = wordRange ? document.getText(wordRange) : '';
+    // fullOpcodeCompletions.push(...completionItems);
 
-    // console.log("Current word: ", currentWord); 
-
-    // // Filter completions based on the current word
-    // return fullOpcodeCompletions.filter(item => 
-    //   item.label.toString().toLowerCase().startsWith(currentWord.toLowerCase())
-    // );
-    return fullOpcodeCompletions;
+    return [...fullOpcodeCompletions, ...completionItems];
   },
 };
