@@ -13,7 +13,7 @@ const fullOpcodeCompletions:Array<vscode.CompletionItem> = [];
     // Create a new CompletionItem
     let completionItem = new vscode.CompletionItem(
       opcodeObj.opcodeName,
-      vscode.CompletionItemKind.Snippet
+      vscode.CompletionItemKind.Function
     );
 
     // Set the label to be the opcode name
@@ -46,11 +46,23 @@ export const completionItemProvider = {
   ) {
     const config = vscode.workspace.getConfiguration("csound");
     const showHints = config.get("showHints") as boolean;
-    const completions: vscode.CompletionItem[] = [];
     if (!showHints) {
-      return completions;
+      return [];
     }
-    // TODO - filter by word in context
+
+    // // Get the current line's text
+    // const lineText = document.lineAt(position.line).text;
+
+    // // Find the word range at the current position
+    // const wordRange = document.getWordRangeAtPosition(position);
+    // const currentWord = wordRange ? document.getText(wordRange) : '';
+
+    // console.log("Current word: ", currentWord); 
+
+    // // Filter completions based on the current word
+    // return fullOpcodeCompletions.filter(item => 
+    //   item.label.toString().toLowerCase().startsWith(currentWord.toLowerCase())
+    // );
     return fullOpcodeCompletions;
   },
 };
