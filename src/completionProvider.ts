@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import opcodesJson from "./opcodes.json";
-import { tokens } from "./extension";
+import { documentTokens } from "./extension";
 // Utility function to convert synopsis with proper markdown and newlines
 const formatSynopsisForMarkdown = (synopsis: string): string => {
   // Add two spaces before each newline for single line breaks in Markdown
@@ -50,8 +50,12 @@ export const completionItemProvider = {
       return [];
     }
 
-    const completionItems = Array.from(tokens).map(word => {
-      const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Text);
+    //get unique set for document
+    const uri = document.uri.toString();
+    const wordsSet = documentTokens.get(uri) || new Set();
+    
+    const completionItems = Array.from(wordsSet).map(token => {
+      const item = new vscode.CompletionItem(token, vscode.CompletionItemKind.Text);
       return item;
     });
 

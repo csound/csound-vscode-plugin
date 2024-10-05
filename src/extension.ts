@@ -5,12 +5,12 @@ import * as commands from "./commands/csoundCommands";
 import { showOpcodeReference } from "./commands/showOpcodeReference";
 import { completionItemProvider } from "./completionProvider";
 
-export let tokens: Set<string> = new Set(); // Use a Set to avoid duplicates
+export let documentTokens: Map<string, Set<string>> = new Map(); // Use a Set to avoid duplicates
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("Csound's vscode plugin is now active!");
 
-  //add autocomplete for opcodes
+  // Add autocomplete for opcodes
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(
       "csound-csd",
@@ -27,65 +27,94 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  // Function to remove single-line and multi-line comments from a line
+  function removeComments(lineText: string): string {
+    // Remove single-line comments (//)
+    lineText = lineText.replace(/\/\/.*$/, '');
+    // Remove multi-line comments (/* ... */)
+    lineText = lineText.replace(/\/\*[\s\S]*?\*\//g, '');
+    return lineText;
+  }
+
+  // Function to add tokens (words) to the Set for the given document
+  function addTokensToDocumentSet(document: vscode.TextDocument, content: string) {
+    const uri = document.uri.toString();
+
+    // Get or create the token set for this document
+    let tokensSet = documentTokens.get(uri);
+    if (!tokensSet) {
+      tokensSet = new Set();
+      documentTokens.set(uri, tokensSet);
+    }
+
+    // Process the content (can be the entire document or a single line)
+    const lines = content.split('\n'); // Split content into lines
+
+    lines.forEach(lineText => {
+      // Remove comments from the line
+      lineText = removeComments(lineText);
+
+      // Split the line into words
+      const newWords = lineText.split(/\W+/).filter(Boolean); // Split by non-alphanumeric characters, remove empty strings
+
+      // Add only words that start with a, k, i, S, f (case-sensitive) or words that follow 'instr'
+      newWords.forEach(word => {
+        if (/^[akiSf]/.test(word)) { // Matches words starting with the specified characters
+          tokensSet?.add(word);
+        }
+
+        // Add words following 'instr'
+        const instrRegex = /\binstr\s+(\w+)/g;
+        let match;
+        while ((match = instrRegex.exec(lineText)) !== null) {
+          tokensSet?.add(match[1]); // Add the word following 'instr'
+        }
+      });
+    });
+  }
+
+  // Listen for changes in text documents
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument(event => {
       const document = event.document;
+
       event.contentChanges.forEach(change => {
-        // Get the position of the line that was modified
         const lineNumber = change.range.start.line;
-        const lineText = document.lineAt(lineNumber).text; // Get the entire line text
-        // Detect whether the change contains a non-alphanumeric character (end of a word)
+        const lineText = document.lineAt(lineNumber).text;
         const changeText = change.text;
+
         if (/\W/.test(changeText)) {
-          // If a non-alphanumeric character was entered, split the line into words
-          const newWords = lineText.split(/\W+/).filter(Boolean); // Split by non-alphanumeric characters, remove empty strings
-          // Add each completed word from the current line to the Set
-          newWords.forEach(word => tokens.add(word));
+          // Add tokens from the current line
+          addTokensToDocumentSet(document, lineText);
         }
       });
     })
   );
 
-  // Function to parse an entire document and add words
-  const addWordsFromDocument = (document: vscode.TextDocument) => {
-    const text = document.getText(); // Get the entire text of the document
-    console.log("text", text);
-    const wordsInDocument = text.split(/\W+/).filter(Boolean); // Split text by non-alphanumeric characters
-    wordsInDocument.forEach(word => tokens.add(word)); // Add each word to the set
-  };
-
-  // Listen for when a document is opened
-  context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(document => {
-      addWordsFromDocument(document); // Parse the document and add words
-    })
-  );
-
-  // Listen for when an editor becomes active (e.g., when switching between files)
+  // Listen for when an editor becomes active (e.g., switching between files)
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(editor => {
       if (editor) {
         const document = editor.document;
-        addWordsFromDocument(document); // Parse the active document and add words
+        addTokensToDocumentSet(document, document.getText()); // Parse the active document and add tokens
       }
     })
   );
 
-  // Listen for when an editor becomes active (in case the file is still loading when opened)
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(editor => {
-      if (editor) {
-        const document = editor.document;
-        addWordsFromDocument(document); // Parse the active document and add words
-      }
-    })
-  );
-
-  // Handle already open files when extension is activated
+  // Handle already open files when the extension is activated
   if (vscode.window.activeTextEditor) {
     const document = vscode.window.activeTextEditor.document;
-    addWordsFromDocument(document); // Parse the currently active file
+    addTokensToDocumentSet(document, document.getText()); // Parse the currently active file
   }
+
+  // Clean up token sets when a document is closed
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument(document => {
+      const uri = document.uri.toString();
+      documentTokens.delete(uri); // Remove the token set for this document
+    })
+  );
+
 
   const showOpcodeReferenceCommand = vscode.commands.registerCommand(
     "extension.showOpcodeReference",
@@ -116,9 +145,10 @@ export function activate(context: vscode.ExtensionContext) {
     commands.evalSco
   );
   context.subscriptions.push(evalScoCommand);
+
 }
 
-// this method is called when your extension is deactivated
+// This method is called when your extension is deactivated
 export function deactivate() {
   commands.killCsoundProcess();
 }
