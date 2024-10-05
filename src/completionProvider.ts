@@ -108,7 +108,7 @@ export const completionItemProvider = {
     const wordsSet = documentTokens.get(uri) || new Set();
 
     const completionItems = Array.from(wordsSet).map(token => {
-      const item = new vscode.CompletionItem(token, vscode.CompletionItemKind.Text);
+      const item = new vscode.CompletionItem(token, vscode.CompletionItemKind.Variable);
       return item;
     });
 
