@@ -3,9 +3,7 @@
 import * as vscode from "vscode";
 import * as commands from "./commands/csoundCommands";
 import { showOpcodeReference } from "./commands/showOpcodeReference";
-import { completionItemProvider } from "./completionProvider";
-
-export let documentTokens: Map<string, Set<string>> = new Map(); // Use a Set to avoid duplicates
+import { completionItemProvider, addTokensToDocumentSet, clearTokensForDocumentSet } from "./completionProvider";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("Csound's vscode plugin is now active!");
@@ -25,53 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
       completionItemProvider,
       ""
     )
-  );
-
-  // Function to remove single-line and multi-line comments from a line
-  function removeComments(lineText: string): string {
-    // Remove single-line comments (//)
-    lineText = lineText.replace(/\/\/.*$/, '');
-    // Remove multi-line comments (/* ... */)
-    lineText = lineText.replace(/\/\*[\s\S]*?\*\//g, '');
-    return lineText;
-  }
-
-  // Function to add tokens (words) to the Set for the given document
-  function addTokensToDocumentSet(document: vscode.TextDocument, content: string) {
-    const uri = document.uri.toString();
-
-    // Get or create the token set for this document
-    let tokensSet = documentTokens.get(uri);
-    if (!tokensSet) {
-      tokensSet = new Set();
-      documentTokens.set(uri, tokensSet);
-    }
-
-    // Process the content (can be the entire document or a single line)
-    const lines = content.split('\n'); // Split content into lines
-
-    lines.forEach(lineText => {
-      // Remove comments from the line
-      lineText = removeComments(lineText);
-
-      // Split the line into words
-      const newWords = lineText.split(/\W+/).filter(Boolean); // Split by non-alphanumeric characters, remove empty strings
-
-      // Add only words that start with a, k, i, S, f (case-sensitive) or words that follow 'instr'
-      newWords.forEach(word => {
-        if (/^[akiSf]/.test(word)) { // Matches words starting with the specified characters
-          tokensSet?.add(word);
-        }
-
-        // Add words following 'instr'
-        const instrRegex = /\binstr\s+(\w+)/g;
-        let match;
-        while ((match = instrRegex.exec(lineText)) !== null) {
-          tokensSet?.add(match[1]); // Add the word following 'instr'
-        }
-      });
-    });
-  }
+  );  
 
   // Listen for changes in text documents
   context.subscriptions.push(
@@ -111,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument(document => {
       const uri = document.uri.toString();
-      documentTokens.delete(uri); // Remove the token set for this document
+      clearTokensForDocumentSet(uri); // Remove the token set for this document
     })
   );
 
