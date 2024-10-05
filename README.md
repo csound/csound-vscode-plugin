@@ -45,6 +45,10 @@ None.
 
 ## Release Notes
 
+## 0.6.4
+
+* Adds support for autocomplete for variables by document 
+
 ## 0.6.3
 
 * Adds support for embedded JSON support for Cabbage section of CSDs 
