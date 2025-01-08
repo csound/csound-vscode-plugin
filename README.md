@@ -32,7 +32,7 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 
 | setting                     | default       | description                                                                                                                                 |
 | --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `csound.executable`         | `"csound"`    | The Csound executable                                                                                                                       |
+| `csound.executable`         | `"csound"`    | The Csound executable. The default value of `csound` will run the system wide Csound. If you wish to use another Csound executable you can do so by passing an updated path, or browsing for a Csound executable from the Command palette.                                                                                                                        |
 | `csound.playArgs`           | `[ "-odac" ]` | Arguments to give to Csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
 | `csound.UDPAddress` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |

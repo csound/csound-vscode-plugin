@@ -99,6 +99,22 @@ async function saveToPlayDialog(): Promise<string> {
     return selected || "Cancel";
 }
 
+export async function selectCsoundExecutable() {
+    const config = vscode.workspace.getConfiguration('csound');
+
+    const csoundExecPath = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+        openLabel: 'Select Csound Executable'
+    });
+
+    if (csoundExecPath && csoundExecPath.length > 0) {
+        // Use the correct key name that matches your package.json configuration
+        await config.update('executable', csoundExecPath[0].fsPath, vscode.ConfigurationTarget.Global);
+    }
+}
+
 async function setSaveSilentlyOnPlay() {
     const config = vscode.workspace.getConfiguration("csound");
     config.update("saveSilentlyOnPlay", "true", true);
