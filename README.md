@@ -45,6 +45,13 @@ None.
 
 ## Release Notes
 
+## 0.6.5
+
+* Adds Cabbage opcodes 
+* Adds "Csound: Browse for Csound Executable Command" to set the path to the
+  Csound executable using file selector dialog.
+* Removes type prefix colouring as it makes things look odd in Csound 7
+
 ## 0.6.4
 
 * Adds support for autocomplete for variables by document 
