@@ -23,6 +23,10 @@
                 "title": "Csound: Terminate any running csound subprocess"
             },
             {
+                "command": "extension.csoundSelectExecutable",
+                "title": "Csound: Browse for Csound executable"
+            },
+            {
                 "command": "extension.csoundEvalOrc",
                 "title": "Csound: Evaluate Orchestra Code"
             },

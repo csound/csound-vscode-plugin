@@ -72,6 +72,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(playCommand);
 
+  const browseForExecutableCommand = vscode.commands.registerTextEditorCommand(
+    "extension.csoundSelectExecutable",
+    commands.selectCsoundExecutable
+  );
+  context.subscriptions.push(browseForExecutableCommand);
+
   const killCommand = vscode.commands.registerTextEditorCommand(
     "extension.csoundKillCsoundProcess",
     commands.killCsoundProcess
