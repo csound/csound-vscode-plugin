@@ -45,6 +45,10 @@ None.
 
 ## Release Notes
 
+## 0.6.6
+
+* Fixes release issue with 0.6.5
+
 ## 0.6.5
 
 * Adds Cabbage opcodes 
