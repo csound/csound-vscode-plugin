@@ -194,11 +194,19 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
         bashParser.setLanguage(bashLanguage);
         const bashHighlightsQuery = new Query(bashLanguage, options.bashHighlights);
 
+        // toml
+        const tomlBuffer = base64ToUint8Array(options.tomlWasmUri);
+        const tomlLanguage = await Language.load(tomlBuffer);
+        const tomlParser = new Parser();
+        tomlParser.setLanguage(tomlLanguage);
+        const tomlHighlightsQuery = new Query(tomlLanguage, options.tomlHighlights);
+
         injectedLanguages["csound"] = { parser: parser, query: highlightsQuery };
         injectedLanguages["html"] = { parser: htmlParser, query: htmlHighlightsQuery };
         injectedLanguages["json"] = { parser: jsonParser, query: jsonHighlightsQuery };
         injectedLanguages["python"] = { parser: pythonParser, query: pythonHighlightsQuery };
         injectedLanguages["bash"] = { parser: bashParser, query: bashHighlightsQuery };
+        injectedLanguages["toml"] = { parser: tomlParser, query: tomlHighlightsQuery };
 
         connection.console.log("Csound LSP-Web initialized!");
 
@@ -287,19 +295,20 @@ function validateDocument(uri: string) {
         }
     }
 
-    for (const typeNode of diagnosticReport.types) {
-        const typeIdentifier = getCleanNodeText(typeNode.text);
-        const isTypeIncluded = Array
-            .from(doc.cachedIncludedUdoFiles.values())
-            .some(udoFile => udoFile.typeList.has(typeIdentifier));
-        if (!isValidType(typeIdentifier) && !diagnosticReport.udt.has(typeIdentifier) && !isTypeIncluded) {
-            pushDiagnostic(
-                diagnostics,
-                cachedDiagnostics,
-                nodeDiagnostic(typeNode, DiagnosticSeverity.Error, `Unknown type identifier: <${typeIdentifier}>`)
-            );
-        }
-    }
+    // For the time being, it is not possible to trace back to a new type.
+    // for (const typeNode of diagnosticReport.types) {
+    //     const typeIdentifier = getCleanNodeText(typeNode.text);
+    //     const isTypeIncluded = Array
+    //         .from(doc.cachedIncludedUdoFiles.values())
+    //         .some(udoFile => udoFile.typeList.has(typeIdentifier));
+    //     if (!isValidType(typeIdentifier) && !diagnosticReport.udt.has(typeIdentifier) && !isTypeIncluded) {
+    //         pushDiagnostic(
+    //             diagnostics,
+    //             cachedDiagnostics,
+    //             nodeDiagnostic(typeNode, DiagnosticSeverity.Error, `Unknown type identifier: <${typeIdentifier}>`)
+    //         );
+    //     }
+    // }
 
     for (const genericError of diagnosticReport.genericErrors) {
         const nodeText = getCleanNodeText(genericError.node.text);

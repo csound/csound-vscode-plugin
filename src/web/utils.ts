@@ -1,4 +1,4 @@
-import { Parser, Query, Tree, Node } from "web-tree-sitter";
+import { Parser, Point, Query, Tree, Node } from "web-tree-sitter";
 
 export interface ResolveIncludedUdoRequest {
     documentPath: string,
@@ -181,27 +181,50 @@ export function getInjections(
 ): SemToken[] {
     const injectionsCaptures = injection.captures(tree.rootNode);
 
-    let allInjections: SemToken[] = [];
+    // blocks to parse; with `injection.combined` the captures under the same node form one block
+    const blocks: { langName: string, startIndex: number, endIndex: number, startPosition: Point }[] = [];
+    const combined = new Map<number, number>();
+
     for (const capture of injectionsCaptures) {
-        if (capture.name === "injection.content") {
-            let langName = capture.setProperties?.["injection.language"];
+        if (capture.name !== "injection.content") { continue; }
 
-            if (!langName) { continue; }
+        const langName = capture.setProperties?.["injection.language"];
+        if (!langName || !languages[langName]) { continue; }
 
-            const lang = languages[langName];
-            const node = capture.node;
-            const nodeContent = node.text;
-            const subTree = lang.parser.parse(nodeContent);
+        const node = capture.node;
+        const isCombined = capture.setProperties !== undefined && "injection.combined" in capture.setProperties;
+        const parentId = node.parent?.id;
+        const index = isCombined && parentId !== undefined ? combined.get(parentId) : undefined;
 
-            const currentTokens = getSemanticTokens(lang.query, subTree!, nodeContent);
-            for (const token of currentTokens) {
-                const absoluteLine = node.startPosition.row + token.line;
-                const absoluteChar = (token.line === 0)
-                    ? node.startPosition.column + token.char
-                    : token.char;
-
-                allInjections.push({ ...token, line: absoluteLine, char: absoluteChar });
+        if (index !== undefined) {
+            const block = blocks[index];
+            if (node.startIndex < block.startIndex) {
+                block.startIndex = node.startIndex;
+                block.startPosition = node.startPosition;
             }
+            block.endIndex = Math.max(block.endIndex, node.endIndex);
+            continue;
+        }
+        if (isCombined && parentId !== undefined) { combined.set(parentId, blocks.length); }
+        blocks.push({ langName, startIndex: node.startIndex, endIndex: node.endIndex, startPosition: node.startPosition });
+    }
+
+    const text = tree.rootNode.text;
+    let allInjections: SemToken[] = [];
+    for (const block of blocks) {
+        const lang = languages[block.langName];
+        const blockContent = text.slice(block.startIndex, block.endIndex);
+        const subTree = lang.parser.parse(blockContent);
+        if (!subTree) { continue; }
+
+        const currentTokens = getSemanticTokens(lang.query, subTree, blockContent);
+        for (const token of currentTokens) {
+            const absoluteLine = block.startPosition.row + token.line;
+            const absoluteChar = (token.line === 0)
+                ? block.startPosition.column + token.char
+                : token.char;
+
+            allInjections.push({ ...token, line: absoluteLine, char: absoluteChar });
         }
     }
     return allInjections;

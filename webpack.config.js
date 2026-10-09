@@ -165,6 +165,15 @@ const lspServerConfig = {
                     from: path.resolve(__dirname, 'node_modules/tree-sitter-bash/queries'),
                     to: './bash_queries',
                     context: 'src/web'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/@tree-sitter-grammars/tree-sitter-toml/tree-sitter-toml.wasm'),
+                    to: './'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/@tree-sitter-grammars/tree-sitter-toml/queries'),
+                    to: './toml_queries',
+                    context: 'src/web'
                 }
             ]
         })

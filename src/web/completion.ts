@@ -35,11 +35,15 @@ export interface CursorContext {
     beforePrefix: string;  // current line up to the prefix
 }
 
-const SECTION_TAG = /<(\/?)(CsOptions|CsInstruments|CsScore|CsoundSynthesi[sz]er|CabbageARA|Cabbage|CsFileB|CsFile|CsMidifileB|CsSampleB|CsLicen[cs]e|CsShortLicen[cs]e|html)([^>]*)>/g;
+const SECTION_TAG = /<(\/?)(CsOptions|CsInstruments|CsScore|CsoundSynthesi[sz]er|CabbageARA|Cabbage|CsFileB|CsFile|CsMidifileB|CsSampleB|CsLicen[cs]e|CsShortLicen[cs]e|html|CsTest)([^>]*)>/g;
 const BLOCK_BOUNDARY = /^[ \t]*(instr|opcode|endin|endop)\b[ \t]*([^\s,;(]*)/gm;
 const DEFINITION_LINE = /^\s*(instr|opcode)\b/;
 const STRUCT_CHAIN = /([A-Za-z_]\w*(?:\[[^\]]*\])*(?:\.[A-Za-z_]\w*(?:\[[^\]]*\])*)*)\.$/;
 const SNIPPET_PLACEHOLDER = /\$\{?\d/;
+const SYNTHESIZER_START = /<CsoundSynthesi[sz]er>/;
+
+// opcode reference entry holding the .csd skeleton
+const CSD_TEMPLATE = "CsoundSynthesizer";
 
 const BASE_TYPES = [
     "a", "i", "k", "b", "S", "f", "w", "InstrDef", "Instr", "Opcode", "OpcodeDef", "Complex"
@@ -273,7 +277,7 @@ function udoItems(doc: DocState, prefix: string, items: CompletionItem[], seen: 
 function opcodeItems(opcodes: Map<string, any>, prefix: string, items: CompletionItem[], seen: Set<string>) {
     for (const [name, data] of opcodes) {
         const isValidName = /^[A-Za-z_]/.test(name);
-        if (!isValidName || !matchesPrefix(name, prefix) || seen.has(name)) { continue; }
+        if (!isValidName || name === CSD_TEMPLATE || !matchesPrefix(name, prefix) || seen.has(name)) { continue; }
         const body = bodyText(data);
         const isSnippet = SNIPPET_PLACEHOLDER.test(body);
         items.push({
@@ -286,6 +290,31 @@ function opcodeItems(opcodes: Map<string, any>, prefix: string, items: Completio
             sortText: `2${name}`
         });
     }
+}
+
+// The .csd skeleton, offered in a .csd that has no <CsoundSynthesizer> yet. A `<` typed
+// before the name is replaced too.
+function templateItems(src: CompletionSources, ctx: CursorContext, pos: Position): CompletionItem[] | undefined {
+    if (SYNTHESIZER_START.test(src.doc.text) || !matchesPrefix(CSD_TEMPLATE, ctx.prefix)) { return undefined; }
+    const data = src.opcodes.get(CSD_TEMPLATE);
+    if (!data) { return undefined; }
+
+    const typedAngle = ctx.beforePrefix.endsWith("<");
+    const range: Range = {
+        start: { line: pos.line, character: ctx.beforePrefix.length - (typedAngle ? 1 : 0) },
+        end: { line: pos.line, character: ctx.lineBefore.length }
+    };
+    const body = bodyText(data);
+
+    return [{
+        label: CSD_TEMPLATE,
+        kind: CompletionItemKind.Snippet,
+        detail: data["prefix"],
+        documentation: data["description"],
+        filterText: typedAngle ? `<${CSD_TEMPLATE}` : CSD_TEMPLATE,
+        textEdit: { range, newText: body },
+        insertTextFormat: SNIPPET_PLACEHOLDER.test(body) ? InsertTextFormat.Snippet : InsertTextFormat.PlainText
+    }];
 }
 
 function keywordItems(prefix: string, items: CompletionItem[]) {
@@ -464,6 +493,7 @@ export function complete(src: CompletionSources, pos: Position, triggerKind?: nu
         return macroItems(src, ctx.prefix);
     }
 
+    if (region === "other") { return templateItems(src, ctx, pos); }
     if (region !== "orchestra") { return undefined; }
 
     const scope = scopeAt(doc, ctx.offset);

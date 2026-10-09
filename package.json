@@ -304,6 +304,7 @@
     },
     "dependencies": {
         "@csound/browser": "^7.0.0-beta11",
+        "@tree-sitter-grammars/tree-sitter-toml": "^0.7.0",
         "install": "^0.13.0",
         "path-browserify": "^1.0.1",
         "tree-sitter-bash": "^0.25.1",

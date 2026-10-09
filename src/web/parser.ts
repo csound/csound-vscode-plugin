@@ -514,7 +514,7 @@ export function iterateTree(tree: Tree, macros: any): TreeReport {
 
                 if (!shouldSkip) {
                     const nodeName = getCleanNodeText(currentNode.text);
-                    if (!["CsScore", "CsoundSynthesizer", "CsoundSynthesiser", "CsOptions", "CsInstruments"].includes(nodeName)) {
+                    if (!["CsScore", "CsoundSynthesizer", "CsoundSynthesiser", "CsOptions", "CsInstruments", "CsTest"].includes(nodeName)) {
                         const splittedName = nodeName.split('[')[0];
                         addUserDefinedVar(currentNode, splittedName, report.userDefinitions, macros);
                     }
