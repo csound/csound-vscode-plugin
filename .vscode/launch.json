@@ -22,7 +22,7 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionDevelopmentPath=${workspaceFolder}"
 				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
 			],
 			"outFiles": [
@@ -33,7 +33,7 @@
 		},
               {
                 "name": "Run Web Extension in VS Code",
-                "type": "pwa-extensionHost",
+                "type": "extensionHost",
                 "debugWebWorkerHost": true,
                 "request": "launch",
                 "args": [

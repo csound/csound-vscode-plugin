@@ -1,7 +1,7 @@
 // This script runs in the WebView context and has access to the browser APIs
 // including WebAudio, which is what we need for @csound/browser
 
-import { Csound, CsoundObj } from '@csound/browser';
+import { Csound } from '@csound/browser';
 
 // Define CsoundObj interface locally since it's not exported
 
@@ -12,7 +12,7 @@ declare const window: any;
 
 class CsoundWebView {
     private vscode: any;
-    private csound?: CsoundObj;
+    private csound?: any;
     private audioContext?: any;
     private isInitialized = false;
     private isAudioRunning = false;
@@ -58,7 +58,7 @@ class CsoundWebView {
     private setupMessageListener() {
         window.addEventListener('message', (event: any) => {
             const message = event.data;
-            
+
             switch (message.command) {
                 case 'playCsd':
                     this.playCsd(message.content, message.filename, message.projectFiles);
@@ -102,7 +102,7 @@ class CsoundWebView {
 
             // Use AudioWorklet only (no ScriptProcessorNode fallback)
             this.logOutput('Initializing Csound with shared AudioContext...');
-            
+
             // Create Csound instance reusing shared AudioContext
             this.csound = await Csound({
                 audioContext: this.audioContext,
@@ -111,12 +111,11 @@ class CsoundWebView {
                 autoConnect: true,
                 withPlugins: [],
                 useWorker: false,
-                useSAB: false,
-                useSPN: false
+                useSAB: false
             });
-            
+
             this.logOutput('✅ AudioWorklet initialization successful!');
-            
+
             if (!this.csound) {
                 throw new Error('Failed to create Csound instance');
             }
@@ -182,23 +181,23 @@ class CsoundWebView {
 
         try {
             this.logOutput(`Playing CSD file: ${filename}`);
-            
+
             // Debug: Check what project files we received
             if (projectFiles) {
                 this.logOutput(`Received ${Object.keys(projectFiles).length} project files: ${Object.keys(projectFiles).join(', ')}`);
             } else {
                 this.logOutput('No project files received - projectFiles is undefined/null');
             }
-            
+
             // Notify extension to focus output channel
             this.vscode.postMessage({
                 type: 'startRender',
                 filename: filename
             });
-            
+
             // Stop any current performance
             await this.csound.stop();
-            
+
             // CRITICAL FIX #1: Reset clears the Csound state but NOT the filesystem
             // We need to destroy and recreate Csound to get a fresh filesystem
             this.logOutput('Destroying and recreating Csound for fresh filesystem...');
@@ -223,13 +222,12 @@ class CsoundWebView {
                 withPlugins: [],
                 useWorker: false,
                 useSAB: false,
-                useSPN: false
             });
-            
+
             if (!this.csound) {
                 throw new Error('Failed to recreate Csound instance');
             }
-            
+
             this.csound.on('message', (message: string) => {
                 this.logOutput(message);
             });
@@ -257,9 +255,9 @@ class CsoundWebView {
                 this.updateCsoundPauseButton('Play');
                 this.setCsoundControlsEnabled(false);
             });
-            
+
             this.logOutput(`Csound recreated with fresh filesystem`);
-            
+
             // Step 1: Sync ALL project files to Csound's filesystem first
             if (projectFiles && Object.keys(projectFiles).length > 0) {
                 this.logOutput('Syncing ALL project files to Csound filesystem...');
@@ -267,23 +265,23 @@ class CsoundWebView {
             } else {
                 this.logOutput('Skipping project file sync - no files to sync');
             }
-            
+
             // Step 2: Write the main CSD file to filesystem
             // Ensure filename has absolute path (starts with /)
             const absolutePath = filename.startsWith('/') ? filename : `/${filename}`;
-            
+
             const encoder = new (window as any).TextEncoder();
             const csdData = encoder.encode(csdContent);
             await this.csound.fs.writeFile(absolutePath, csdData);
             this.logOutput(`Written ${absolutePath} to Csound filesystem`);
 
-            
+
             // Step 3: Call csound.compileCsd with absolute path
             this.logOutput(`Calling csound.compileCsd("${absolutePath}", 0)...`);
             const result = await this.csound.compileCSD(absolutePath, 0);
             if (result !== 0) {
                 this.logError(`Failed to compile CSD: ${result}`);
-                return
+                return;
             }
 
 
@@ -376,15 +374,15 @@ class CsoundWebView {
                 if (dirPath) {
                     await this.createDirectoryRecursive(dirPath);
                 }
-                
+
                 // Convert string to Uint8Array
                 const encoder = new (window as any).TextEncoder();
                 const data = encoder.encode(content);
-                
+
                 await this.csound!.fs.writeFile(filePath, data);
                 this.logOutput(`Synced: ${filePath}`);
             }
-            
+
             // List files to verify they were written
             try {
                 const files = await this.csound!.fs.readdir('/');
@@ -399,17 +397,17 @@ class CsoundWebView {
 
     private async inlineIncludes(csdContent: string, projectFiles: {[path: string]: string}): Promise<string> {
         let processedContent = csdContent;
-        
+
         // Find all #include statements
         const includeRegex = /#include\s+["']([^"']+)["']/g;
         let match;
-        
+
         while ((match = includeRegex.exec(csdContent)) !== null) {
             const includePath = match[1];
             const fullMatch = match[0];
-            
+
             this.logOutput(`Processing include: ${includePath}`);
-            
+
             // Look for the file in project files
             const includeContent = projectFiles[includePath];
             if (includeContent) {
@@ -422,7 +420,7 @@ class CsoundWebView {
                 processedContent = processedContent.replace(fullMatch, `; Missing include: ${includePath}`);
             }
         }
-        
+
         return processedContent;
     }
 
@@ -432,7 +430,7 @@ class CsoundWebView {
             const orchestraMatch = csdContent.match(/<CsInstruments>([\s\S]*?)<\/CsInstruments>/i);
             const scoreMatch = csdContent.match(/<CsScore>([\s\S]*?)<\/CsScore>/i);
             const optionsMatch = csdContent.match(/<CsOptions>([\s\S]*?)<\/CsOptions>/i);
-            
+
             // Set options if present
             if (optionsMatch) {
                 const options = optionsMatch[1].trim().split(/\s+/);
@@ -443,7 +441,7 @@ class CsoundWebView {
                     }
                 }
             }
-            
+
             // Compile orchestra
             if (orchestraMatch) {
                 const orchestra = orchestraMatch[1].trim();
@@ -455,7 +453,7 @@ class CsoundWebView {
                 }
                 this.logOutput('Orchestra compiled successfully');
             }
-            
+
             // Handle score
             if (scoreMatch) {
                 const score = scoreMatch[1].trim();
@@ -467,7 +465,7 @@ class CsoundWebView {
                 }
                 this.logOutput('Score processed successfully');
             }
-            
+
             return 0;
         } catch (error) {
             this.logError(`Manual CSD compilation failed: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
@@ -478,7 +476,7 @@ class CsoundWebView {
     private async createDirectoryRecursive(dirPath: string) {
         const parts = dirPath.split('/').filter(part => part.length > 0);
         let currentPath = '';
-        
+
         for (const part of parts) {
             currentPath += '/' + part;
             try {

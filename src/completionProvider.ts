@@ -53,12 +53,12 @@ export const addTokensToDocumentSet = function (document: vscode.TextDocument, c
       }
     });
   });
-}
+};
 
 //delete token from document when document is closed
 export const clearTokensForDocumentSet = function (uri: string) {
   documentTokens.delete(uri);
-}
+};
 
 const fullOpcodeCompletions: Array<vscode.CompletionItem> = [];
 opcodesJson.opcodes.forEach((categoryObj: any) => {
