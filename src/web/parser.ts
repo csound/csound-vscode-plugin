@@ -328,7 +328,8 @@ function isValidOutputUdoTypes(typeIdentifier: string, node: Node): boolean {
 
     switch (node.type) {
         case "modern_udo_outputs":
-            if (trimmed.toLowerCase() === "void") {
+            // elements longer than one char are type names (void, user-defined types)
+            if (trimmed.split("[")[0].length > 1) {
                 return true;
             }
             break;
@@ -927,7 +928,6 @@ function getUdoDataType(argList: string): VariableData[] {
         let shape: VarDataShape;
         if (dimension !== 0) {
             shape = { kind: "ARRAY", size: dimension };
-            break;
         } else {
             switch (dType.kind) {
                 case "INIT_TIME":
@@ -954,6 +954,71 @@ function getUdoDataType(argList: string): VariableData[] {
         });
     }
     return data;
+}
+
+// modern udo signatures: comma separated, elements longer than one char are type names
+function getModernUdoDataType(argList: string, udt: Map<string, UserDefinedType>): VariableData[] {
+    const elements = argList.split(",").map(e => e.trim()).filter(e => e.length > 0);
+    if (elements.length === 0) {
+        return getUdoDataType("");
+    }
+
+    return elements.map(e => {
+        const base = e.split("[")[0];
+        if (Array.from(base).length <= 1) {
+            return getUdoDataType(e)[0] ?? {
+                dataType: { kind: "UNKNOWN" },
+                dataShape: { kind: "UNKNOWN" },
+                isArray: false
+            };
+        }
+
+        const dimension = e.match(/\[\]/g)?.length ?? 0;
+        let dtype: VarDataType;
+        switch (base) {
+            case "InstrDef":
+                dtype = { kind: "INSTR_DEF" };
+                break;
+            case "Instr":
+                dtype = { kind: "INSTR" };
+                break;
+            case "Opcode":
+                dtype = { kind: "OPCODE" };
+                break;
+            case "OpcodeDef":
+                dtype = { kind: "OPCODE_DEF" };
+                break;
+            case "Complex":
+                dtype = { kind: "COMPLEX" };
+                break;
+            default:
+                dtype = base.toLowerCase() === "void"
+                    ? { kind: "VOID" }
+                    : { kind: "TYPE_DEF", name: base };
+                break;
+        }
+
+        let shape: VarDataShape;
+        if (dimension !== 0) {
+            shape = { kind: "ARRAY", size: dimension };
+        } else if (dtype.kind === "VOID") {
+            shape = { kind: "NO_SHAPE" };
+        } else {
+            const struct = udt.get(base);
+            shape = struct ? structShape(struct) : { kind: "EXPRESSION" };
+        }
+        return { dataType: dtype, dataShape: shape, isArray: dimension !== 0 };
+    });
+}
+
+function structShape(struct: UserDefinedType): VarDataShape {
+    let members = [];
+    for (const member of struct.udtMembers) {
+        members.push(`${member.name}:${member.type}`);
+    }
+    return members
+        ? { kind: "STRUCT", name: members.join(", ") }
+        : { kind: "STRUCT", name: "Unknown members" };
 }
 
 function getVariableDataType(node: Node, udt: Map<string, UserDefinedType>): VariableData | undefined {
@@ -1057,13 +1122,7 @@ function getVariableDataType(node: Node, udt: Map<string, UserDefinedType>): Var
                 break;
             default:
                 if (isStruct) {
-                    let members = [];
-                    for (const member of isStruct.udtMembers) {
-                        members.push(`${member.name}:${member.type}`);
-                    }
-                    shape = members
-                        ? { kind: "STRUCT", name: members.join(", ") }
-                        : { kind: "STRUCT", name: "Unknown members" };
+                    shape = structShape(isStruct);
                     break;
                 }
                 shape = { kind: "EXPRESSION" };
@@ -1379,15 +1438,15 @@ function addUserDefinedOpcode(node: Node, key: string, udef: UserDefinitions) {
                         if (c.includes(':')) {
                             return c.split(":").pop()?.trim();
                         } else {
-                            return getNameAndTypeFromLegacyVar(c).varType;
+                            return getNameAndTypeFromLegacyVar(c.trim()).varType;
                         }
                     })
                     .filter((v): v is string => !!v)
-                    .join("");
+                    .join(",");
 
                 const outputs = formats[1].replace(/^\(|\)$/g, "");
-                const inputsData = getUdoDataType(inputs);
-                const outputsData = getUdoDataType(outputs);
+                const inputsData = getModernUdoDataType(inputs, udef.userDefinedTypes);
+                const outputsData = getModernUdoDataType(outputs, udef.userDefinedTypes);
                 udoInfo = [formMod, inputsData, outputsData, UdoType.modern];
                 break;
             default:
