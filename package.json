@@ -274,6 +274,7 @@
         "compile-web": "webpack --config webpack.browser.config.js",
         "watch-web": "webpack --config webpack.browser.config.js --watch",
         "package-web": "webpack --config webpack.browser.config.js --mode production --devtool hidden-source-map",
+        "update-web-opcodes": "python3 scripts/build_web_opcodes.py",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p -w . --outDir out",
         "pretest": "npm run compile-tests && npm run compile && npm run lint",

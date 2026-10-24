@@ -52,12 +52,6 @@ const webExtensionConfig = {
         new copyPlugin({
             patterns: [
                 {
-                    from: 'resources/opcodes/',
-                    to: './opcodes',
-                    context: 'src/web',
-                    noErrorOnMissing: true
-                },
-                {
                     from: 'resources/csound-json_data/',
                     to: './csound-json_data',
                     context: 'src/web',

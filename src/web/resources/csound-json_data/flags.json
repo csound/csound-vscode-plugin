@@ -99,11 +99,6 @@
         "body": "--env",
         "description": "Append VALUE to ';' separated list of search paths in environment variable NAME (should be [INCDIR, SADIR, SFDIR, or SSDIR](environment-variables.md)). If a file is found in multiple directories, the last will be used.\n \n"
     },
-    "--expression-opt": {
-        "prefix": "--expression-opt",
-        "body": "--expression-opt",
-        "description": "*Note that this option has no affect in Csound7. In Csound 5 only.* Turns on some optimizations in expressions:\n \n * Redundant assignment operations are eliminated whenever possible. This means that for example this line `a1 = a2 + a3` will compile as `a1 Add a2, a3` instead of `#a0 Add a2, a3    a1 = #a0` saving a temporary variable and an opcode call. Less opcode calls result in reduced CPU usage (an average orchestra may compile about 10% faster with --expression-opt, but it depends largely on how many expressions are used, what the control rate is (see also below), etc.; thus, the difference may be less, but also much more).\n \n * Number of a- and k-rate temporary variables is significantly reduced. This expression\n     ```\n     (a1 + a2 + a3 + a4)\n     ```\n     will compile as\n     ```\n     #a0 Add a1, a2\n     #a0 Add #a0, a3\n     #a0 Add #a0, a4       ; (the result is in #a0)\n     ```\n     instead of\n     ```\n     #a0 Add a1, a2\n     #a1 Add #a0, a3\n     #a2 Add #a1, a4       ; (the result is in #a2)\n     ```\n     The advantages of less temporary variables are:\n \n       * less cache memory is used, which may improve performance of orchestras with many a-rate expressions and a low control rate (e.g. ksmps = 100)\n \n       * large orchestras may load faster due to less different identifier names\n        \n       * index overflow errors (i.e. when messages like this *Case2: indx=-56004 (ffff253c); (short)indx = 9532 (253c)* are printed and odd behavior or a Csound crash occurs) may be fixed, because such errors are triggered by too many different (especially a-rate) variable names in a single instrument.\n \n     Note that this optimization (due to technical reasons) is not performed on i-rate temporary variables.\n \n     > :warning: **Warning**\n     >\n     > When --expression-opt is turned on, it is not allowed to use the i() function with an expression argument, and relying on the value of k-rate expressions at i-time is unsafe.\n \n"
-    },
     "-F FILE, --midifile=FILE": {
         "prefix": "-F FILE, --midifile=FILE",
         "body": "-F",
@@ -257,7 +252,7 @@
     "-m NUM, --messagelevel=NUM": {
         "prefix": "-m NUM, --messagelevel=NUM",
         "body": "-m",
-        "description": "Message level for standard (terminal) output. Takes the *sum* of any of the following values:\n \n * 1 = note amplitude messages\n * 2 = samples out of range message\n * 4 = warning messages\n * 128 = print benchmark information\n * 1024 = suppress deprecated messages\n \n And exactly one of these to select note amplitude format:\n \n * 0 = raw amplitudes, no colours\n * 32 = dB, no colors\n * 64 = dB, out of range highlighted with red\n * 96 = dB, all colors\n * 256 = raw, out of range highlighted with red\n * 512 = raw, all colours\n \n All messages can be suppressed by using message level 16.\n \n The default is 135 (128+4+2+1), which means all messages, raw amplitude values, and printing elapsed time at the end of performance.  The coloring of raw amplitudes was introduced in version 5.04. The supression of deprecated messages new in 6.14. Suppression of all messages is new in 6.17.\n \n"
+        "description": "Message level for standard (terminal) output. Takes the *sum* of any of the following values:\n \n * 1 = note amplitude messages\n * 2 = samples out of range message\n * 4 = warning messages\n * 128 = print benchmark information\n * 1024 = suppress deprecated messages\n \n And exactly one of these to select note amplitude format:\n \n * 0 = raw amplitudes, no colours\n * 32 = dB, no colors\n * 64 = dB, out of range highlighted with red\n * 96 = dB, all colors\n * 256 = raw, out of range highlighted with red\n * 512 = raw, all colours\n \n All messages can be suppressed by using message level 16.\n \n The default is 135 (128+4+2+1), which means all messages, raw amplitude values, and printing elapsed time at the end of performance.  The coloring of raw amplitudes was introduced in version 5.04. The supression of deprecated messages new in 6.14. Suppression of all messages is new in 6.17.\n \n Deprecation warnings can also be suppressed with [--no-deprecated-warnings](#--no-deprecated-warnings), which leaves all other warnings unaffected. Note that setting the 1024 bit with *-m1024* replaces the whole message-level mask and therefore also disables ordinary warnings; use *-m1159* (the default 135 plus 1024) to add it while keeping the default message bits.\n \n"
     },
     "--m-amps=NUM": {
         "prefix": "--m-amps=NUM",
@@ -359,6 +354,11 @@
         "body": "--no-default-paths",
         "description": "Disables adding of directory of CSD/ORC/SCO to search paths.\n \n"
     },
+    "--no-deprecated-warnings": {
+        "prefix": "--no-deprecated-warnings",
+        "body": "--no-deprecated-warnings",
+        "description": "Suppresses deprecation warnings, both from the opcode catalog and from hard-coded opcode or feature messages, without affecting other warnings. It does not override `--error-deprecated`, so deprecated opcodes still raise an error when that option is set. (New in version 7.00).\n \n"
+    },
     "--no-expression-opt": {
         "prefix": "--no-expression-opt",
         "body": "--no-expression-opt",
@@ -454,6 +454,11 @@
         "body": "--realtime",
         "description": "Realtime priority mode is switched on which the following effects:\n \n 1. all opcode audio file reading/writing is handled asynchronously by a separate thread.\n 2. all init-pass operations are also performed asynchronously.\n \n"
     },
+    "--recursion-depth=n": {
+        "prefix": "--recursion-depth=n",
+        "body": "--recursion-depth",
+        "description": "Sets the max recursion depth *n* for user-defined opcodes, defaulting to 1000. Setting *n* to 0 disables any recursion depth checks but leaves the engine exposed to stack overflows. \n \n"
+    },
     "-+rtaudio=string": {
         "prefix": "-+rtaudio=string",
         "body": "-+rtaudio",
@@ -463,6 +468,11 @@
         "prefix": "-+rtmidi=string",
         "body": "-+rtmidi",
         "description": "(max. length = 20 characters) Real time MIDI module name. Defaults to PortMIDI (if present). Other options (depending on platform and build) are Linux: alsa; MacOS: cmidi; Windows: mme, winmm. In addition, null can be used on all platforms, to disable the use of any real time MIDI plugin.\n \n ALSA MIDI devices are selected by name and not number. So, you need to use an option like -M hw:CARD,DEVICE where CARD and DEVICE are the card and device numbers (e.g. -M hw:1,0). PortMIDI allows multiple port inputs with either -Ma or -Mm.\n \n"
+    },
+    "--run-unit-tests": {
+        "prefix": "--run-unit-tests",
+        "body": "--run-unit-tests",
+        "description": "Enable the built-in [assertion opcodes](../opcodes/assert.md) and print a unit test report at the end. Checks are ignored by default. Failed checks add errors and the command-line program returns a nonzero exit status. See [Testing](../misc/testing.md).\n \n"
     },
     "-s, --format=short": {
         "prefix": "-s, --format=short",
