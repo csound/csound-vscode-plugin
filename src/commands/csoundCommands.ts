@@ -6,10 +6,12 @@ import { flash, getEvalText, getScoEvalText } from "../utils";
 import path from "path";
 import * as fs from "fs";
 import * as http from "http";
+import * as cp from "child_process";
 
 const socket = dgram.createSocket("udp4");
 
-let terminal: vscode.Terminal | undefined;
+let output: vscode.OutputChannel;
+const processes = new Set<cp.ChildProcess>();
 let manualServer: http.Server | null = null;
 
 export async function selectCsoundExecutable() {
@@ -54,50 +56,104 @@ export async function evalSco(textEditor: vscode.TextEditor) {
     flash(textEditor, new vscode.Range(from, to));
 }
 
-async function _runSaveHelper(cmd: string, action: string) {
+async function saveToPlayDialog(): Promise<string> {
+    const selected = await vscode.window.showInformationMessage<vscode.MessageItem>(
+        "Save file for Csound to play?",
+        { modal: true },
+        { title: "Cancel", isCloseAffordance: true },
+        { title: "Save", isCloseAffordance: false },
+        { title: "Always silently save before playing", isCloseAffordance: false }
+    );
+
+    if (!selected) { return "Cancel"; }
+    if (selected.title === "Always silently save before playing") {
+        await vscode.workspace.getConfiguration("csound").update(
+            "saveSilentlyOnPlay", true, vscode.ConfigurationTarget.Global
+        );
+        return "Save";
+    }
+    return selected.title;
+}
+
+// Saves the document if needed. Returns false when the user cancels or the save fails.
+async function saveBeforeRun(document: vscode.TextDocument): Promise<boolean> {
+    if (!document.isDirty) { return true; }
+
+    const config = vscode.workspace.getConfiguration("csound");
+    if (!config.get<boolean>("saveSilentlyOnPlay", false)) {
+        if (await saveToPlayDialog() === "Cancel") { return false; }
+    }
+
+    if (!await document.save()) {
+        vscode.window.showErrorMessage(`Could not save ${document.fileName}; Csound was not started.`);
+        return false;
+    }
+    return true;
+}
+
+// .csd plays alone, .orc/.sco play as a pair with the same basename
+function csoundInputFiles(file: string): string[] | undefined {
+    const ext = path.extname(file).toLowerCase();
+    const base = file.slice(0, file.length - ext.length);
+    if (ext === ".csd") { return [file]; }
+    if (ext === ".orc" || ext === ".sco") { return [base + ".orc", base + ".sco"]; }
+    return undefined;
+}
+
+async function runCsound(outputArgs: (file: string) => string[]) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
 
-    const file = editor.document.uri.fsPath;
-    let paths: string[] = [];
-
-    if (file.endsWith(".orc")) {
-        let orc = file;
-        paths.push(orc);
-        let sco = orc.replace(/\.orc$/, ".sco");
-        paths.push(sco);
-    } else if (file.endsWith(".sco")) {
-        let sco = file;
-        let orc = sco.replace(/\.sco$/, ".orc");
-        paths.push(orc);
-        paths.push(sco);
-    } else if (file.endsWith(".csd")) {
-        paths.push(file);
-    } else {
-        console.log("Wrong file path!");
+    const document = editor.document;
+    const files = csoundInputFiles(document.fileName);
+    if (!files) {
+        vscode.window.showErrorMessage("Please open a .csd, .orc, or .sco file to run with Csound.");
         return;
     }
 
-    const result = await vscode.commands.executeCommand(
-        cmd,
-        paths
-    ) as unknown as { action: string; exec: string; args: string; path: string[]; };
+    if (!await saveBeforeRun(document)) { return; }
 
-    if (result?.action === action) {
-        if (terminal) { terminal.dispose(); } 
-
-        terminal = vscode.window.createTerminal("Csound");
-        terminal.sendText(`${result.exec} ${result.args} ${result.path.map(p => `${p}`).join(" ")}`);
-        terminal.show();
+    if (output === undefined) {
+        output = vscode.window.createOutputChannel("Csound output");
     }
+
+    const config = vscode.workspace.getConfiguration("csound");
+    const command = config.get<string>("executable", "csound");
+    const args = [...outputArgs(document.fileName), ...files];
+
+    output.clear();
+    output.show(true); // keep focus in the editor
+    output.appendLine(`$ ${command} ${args.join(" ")}`);
+
+    // argument array (no shell): paths with spaces stay one argument
+    const proc = cp.spawn(command, args, { cwd: path.dirname(document.fileName) });
+    processes.add(proc);
+
+    // csound writes most of its output to stderr; strip stray 'ANSI reset color' sequences
+    const append = (data: Buffer) => output.append(data.toString().replace(/\x1b\[m/g, ""));
+    proc.stdout.on("data", append);
+    proc.stderr.on("data", append);
+    proc.on("error", (err) => {
+        processes.delete(proc);
+        vscode.window.showErrorMessage(`Could not start Csound (${command}): ${err.message}`);
+    });
+    proc.on("close", (code) => {
+        processes.delete(proc);
+        output.appendLine(`\n[csound exited with code ${code}]`);
+    });
 }
 
 export async function runFile() {
-    _runSaveHelper("csound-lsp.run_file", "run csound file");
+    const config = vscode.workspace.getConfiguration("csound");
+    // clone: pushing onto the config array would modify the in-memory setting
+    await runCsound(() => [...config.get<string[]>("playArgs", [])]);
 }
 
 export async function saveAsAudioFile() {
-    _runSaveHelper("csound-lsp.to_audio_file", "save as audio file");
+    await runCsound((file) => {
+        const wav = path.join(path.dirname(file), path.parse(file).name + ".wav");
+        return ["-o", wav];
+    });
 }
 
 export async function openManual() {
@@ -157,12 +213,12 @@ export function closeManualServer() {
     if (manualServer) { manualServer.close(); }
 }
 
-export async function stopExecution() {
-    if (terminal) { 
-        terminal.sendText('\x03');
-        terminal.dispose();
-        terminal = undefined;
+export function stopExecution() {
+    for (const proc of processes) {
+        console.log("Killing Csound process (pid " + proc.pid + ")");
+        proc.kill("SIGTERM");
     }
+    processes.clear();
 }
 
 async function startManualLocalServer(rootPath: string, manualServer: { server: http.Server | null }): Promise<string> {

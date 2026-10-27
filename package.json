@@ -79,6 +79,11 @@
                     ],
                     "description": "Arguments to csound when used for playing the current file. An array of strings, each element an argument including the leading dash."
                 },
+                "csound.saveSilentlyOnPlay": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Save the active document without asking before running or rendering it with Csound."
+                },
                 "csound.UDPAddress": {
                     "type": "string",
                     "default": "127.0.0.1",
