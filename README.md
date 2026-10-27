@@ -1,30 +1,61 @@
-# Csound vscode
-
 <!-- markdownlint-disable MD033 -->
 # csound-vscode-plugin
 
 A Csound language plugin for Visual Studio Code.
 
+Language support is provided by the [Csound Language Server](https://github.com/PasqualeMainolfi/csound-lsp), built on the [Csound Tree-sitter grammar](https://github.com/PasqualeMainolfi/tree-sitter-csound), and is compatible with Csound 7. The plugin runs both as a desktop extension and as a web extension (vscode.dev, github.dev), where Csound plays in the browser through WebAudio.
+
 ## Features
 
 csound-vscode-plugin currently provides:
 
-* Syntax Highlighting for Csound .orc and .udo files
+* Syntax highlighting for Csound `.csd`, `.orc`, `.sco`, `.udo` and `.instr` files, based on the syntax tree, including code embedded in a CSD: Python, HTML, Cabbage JSON and CsTest TOML
 
-* Opcode completion with popup hints for opcode arguments
+* Diagnostics as you type: unknown opcodes, undefined and unused variables, labels and macros, and syntax errors, with scoping aware of instruments, UDOs, score blocks and globals
 
-* Show opcode documentation in the editor
+* Opcode completion with popup hints for opcode arguments, plus completion for command-line flags and macros
 
-* Play the file in the currently-active editor window by choosing `Csound: Play Active Document`
- from the command palette or using the `alt+.` shortcut. To kill a playing Csound subprocess, choose
- `Csound: Terminate any running csound subprocess` from the command palette or use the `alt+escape` shortcut
- while the focus is still in a Csound text editor window.
+* Show opcode documentation in the editor: hover over a built-in opcode (Cabbage opcodes included), a user-defined opcode or a user-defined type
 
- * Evaluate code at runtime (live coding) using `Csound: Evaluate Orchestra Code` or `ctrl+enter` (`cmd+enter` on macOS) for ORC code and `Csound: Evaluate Score Code` for SCO code. 
+* Open the Csound manual by choosing `Csound: Open Csound Manual` from the command palette or using the `alt+m` shortcut. On desktop the HTML manual bundled with the language server is shown inside VS Code and works offline; on the web the online manual is opened.
+
+* Play the file in the currently-active editor window by choosing `Csound: Run Active Document`
+ from the command palette or using the `alt+.` shortcut. A `.orc` or `.sco` file is played together with the file with the same name and the opposite extension. To stop a playing Csound, choose
+ `Csound: Stop Running Csound` from the command palette or use the `alt+escape` shortcut
+ while the focus is still in a Csound text editor window (or, on the web, in the Csound WebAudio panel).
+
+* Render the active document to `<name>.wav`, next to the file, with `Csound: Save As Audio File` or `alt+s` (desktop only)
+
+* Evaluate code at runtime (live coding) using `Csound: Evaluate Orchestra Code` or `ctrl+enter` (`cmd+enter` on macOS) for ORC code and `Csound: Evaluate Score Code` for SCO code.
+
+* Indentation as you type (desktop) and `Format Document` (web). Raw strings (`{{ }}`, `R{ }R`) and embedded code are left untouched.
+
+* CodeLens at the top of each file (Manual, Run, Stop, To Audio File) and a `Csound actions` menu in the status bar (desktop)
+
+* A CSD template: type `barebone` to insert it
+
+### Commands
+
+| command | shortcut | available on |
+| ------- | -------- | ------------ |
+| `Csound: Run Active Document` | `alt+.` | desktop, web |
+| `Csound: Stop Running Csound` | `alt+escape` | desktop, web |
+| `Csound: Save As Audio File` | `alt+s` | desktop |
+| `Csound: Open Csound Manual` | `alt+m` | desktop, web |
+| `Csound: Evaluate Orchestra Code` | `ctrl+enter` / `cmd+enter` | desktop, web |
+| `Csound: Evaluate Score Code` | | desktop, web |
+| `Csound: Browse for Csound executable` | | desktop |
+
+Keybindings bound to the previous command IDs (`extension.csoundPlayActiveDocument`, `extension.csoundKillCsoundProcess`, `extension.showOpcodeReference`) keep working.
 
 ## Requirements
 
-You must have Csound properly configured on your system so you can use it on the command line.
+* VS Code 1.82 or later.
+
+* Desktop: you must have Csound properly configured on your system so you can use it on the command line, or set its path with `csound.executable`.
+  On first start the plugin offers to download the Csound Language Server for your platform (Windows x86_64, Linux x86_64, macOS x86_64 and arm64) from its [GitHub releases](https://github.com/PasqualeMainolfi/csound-lsp/releases), and it offers updates when a new release is out. Without a network connection the installed version is used. Commands keep working without the language server.
+
+* Web: nothing to install. Csound runs in the browser in the `Csound WebAudio` panel of the Explorer, and the language features run in a bundled web version of the language server.
 
 ## Live Coding
 
@@ -34,146 +65,91 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 
 | setting                     | default       | description                                                                                                                                 |
 | --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `csound.executable`         | `"csound"`    | The Csound executable. The default value of `csound` will run the system wide Csound. If you wish to use another Csound executable you can do so by passing an updated path, or browsing for a Csound executable from the Command palette.                                                                                                                        |
+| `csound.executable`         | `"csound"`    | The Csound executable. The default value of `csound` will run the system wide Csound. If you wish to use another Csound executable you can do so by passing an updated path, or browsing for a Csound executable from the Command palette. |
 | `csound.playArgs`           | `[ "-odac" ]` | Arguments to give to Csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
-| `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing the current file.                                                                                     |
-| `csound.UDPAddress` | `127.0.0.1`       | Address to send live coding evaluations over UDP.                                                                                     |
-| `csound.UDPPort` | `10000`       |  Port to send live coding evaluations over UDP.                                                                                    |
-| `csound.htmlFilePath` | `""`       |  Csound manual root directory on local file system for loading opcode documentation. If empty, defaults to C:\\Program Files\\Csound6_x64\\doc\\manual on Windows, and /Library/Frameworks/CsoundLib64.framework/Versions/6.0/Resources/Manual on macOS. |
+| `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing or rendering the current file. Choosing "Always silently save before playing" in the prompt sets it. |
+| `csound.UDPAddress`         | `127.0.0.1`   | Address to send live coding evaluations over UDP. |
+| `csound.UDPPort`            | `10000`       | Port to send live coding evaluations over UDP. |
+| `csound.htmlFilePath`       | `""`          | No longer used: the manual is now bundled with the language server. |
 
 ## Known Issues
 
-None.
+* Rendering to an audio file and selecting the Csound executable are not available in the web extension.
 
-### Release Notes (from PR)
+## Release Notes
 
-This PR introduces a new Csound extension for Visual Studio Code built on top of a custom [Csound Language Server (LSP)](https://github.com/PasqualeMainolfi/csound-lsp) and a [Csound Tree-sitter grammar](https://github.com/PasqualeMainolfi/tree-sitter-csound) specifically designed for Csound.  
+### Unreleased
 
-The extension aims to provide a modern, semantically aware editing experience for Csound users, fully compatible with Csound7.  
-
-## Key Features
-
-**LSP**  
-
-* Advanced diagnostics
-* Detection of unused variables
-* Detection of undefined variables
-* Opcode error reporting
-* Advanced scoping logic, aware of instruments, UDOs, score blocks, and global contexts
-* Precise error localization based on the Tree-sitter syntax tree
-
-**Editor**  
-
-* Format on type
-* CodeLens for:
-  * Running a script
-  * Saving output to an audio file
-  * Opening the Csound manual
-* Code Actions for quick fixes and navigation
-
-**Completion & Hover**  
-
-* Opcode completion
-* Option/flag completion
-* Hover support for:
-  * Built-in opcodes
-  * User-defined opcodes (UDOs)
-  * User-defined types
-
-**Commands exposed by the Language Server**  
-
-The server exposes the following commands:  
-
-* `csound-lsp.run_file` — run the current Csound script
-* `csound-lsp.to_audio_file` — render and save output to an audio file
-* `csound-lsp.open_manual` — open the Csound reference manual
-
-**Offline Manual (Web Preview)**  
-
-* The Csound HTML reference manual is bundled with the language server
-* A lightweight local HTTP server is started by the server
-* The manual is displayed inside a VS Code Webview
-* Fully functional offline browsing, including links, searching and assets
-
-**Language Injections**  
-
-* Python and HTML language injections are supported inside Csound files
-* Enables proper highlighting and tooling for embedded code
-
-## Technical Notes  
-
-* Syntax parsing is handled via Tree-sitter
-* Semantic analysis is built directly on the syntax tree
-* The LSP architecture is modular and designed for future extensions
-
-## Future Work
-
-Planned next steps include:
-
-* Deeper support for Cabbage blocks
-* Additional semantic checks, completions, and editor actions  
+* New language support built on the [Csound Language Server](https://github.com/PasqualeMainolfi/csound-lsp) and the [Csound Tree-sitter grammar](https://github.com/PasqualeMainolfi/tree-sitter-csound): syntax-tree based highlighting, diagnostics, completion, hover, formatting and CodeLens, on desktop and web.
+* Offline Csound manual inside VS Code on desktop.
+* Highlighting of Python, HTML, Cabbage JSON and CsTest TOML embedded in CSD files.
+* The language server is downloaded and updated automatically; an installed version keeps working offline.
+* One command per action on desktop and web; new command IDs (`csound.runFile`, `csound.stopExecution`, `csound.openManual`, `csound.saveAsAudioFile`), with the previous IDs kept as aliases.
+* New `Csound: Save As Audio File` command (`alt+s`).
+* Requires VS Code 1.82 or later.
 
 ### 0.7.0
 
 * Initial implementation of in-browser rendering with WebAudio Csound when installed as a web extension.
 
-## 0.6.6
+### 0.6.6
 
 * Fixes release issue with 0.6.5
 
-## 0.6.5
+### 0.6.5
 
-* Adds Cabbage opcodes 
+* Adds Cabbage opcodes
 * Adds "Csound: Browse for Csound Executable Command" to set the path to the
   Csound executable using file selector dialog.
 * Removes type prefix colouring as it makes things look odd in Csound 7
 
-## 0.6.4
+### 0.6.4
 
-* Adds support for autocomplete for variables by document 
+* Adds support for autocomplete for variables by document
 
-## 0.6.3
+### 0.6.3
 
-* Adds support for embedded JSON support for Cabbage section of CSDs 
+* Adds support for embedded JSON support for Cabbage section of CSDs
 
-## 0.6.2
+### 0.6.2
 
-* Enable opcode completion and hints for web extension 
+* Enable opcode completion and hints for web extension
 
-## 0.6.1
+### 0.6.1
 
 * Fix import of opcodes.json
 
-## 0.6.0
+### 0.6.0
 
 * Adds support for autocomplete, popup hints for opcode arguments, and showing opcode documentation in the editor.
 
-## 0.5.2 
+### 0.5.2
 
 * Adds .instr as file extension for ORC syntax highlighting
 
-## 0.5.1 
+### 0.5.1
 
-* Adds support for folding for #region / #endregion comments 
+* Adds support for folding for #region / #endregion comments
 
 * Updated README for information on using --port=10000 flag for live coding
 
-## 0.5.0
+### 0.5.0
+
 * Can now play from ORC/SCO pair, associating to the file from the currently-active editor window a file contained in the same folder with the same name but opposite extension.
 
-* Added CSD barebone as snippet, use the keyword `barebone` to insert the template code in your CSD file. 
+* Added CSD barebone as snippet, use the keyword `barebone` to insert the template code in your CSD file.
 
-## 0.4.0
+### 0.4.0
 
 * Updated to vscode 1.60 extension format to work as a Desktop and Web extension. (Play commands currently disabled until WebAudio Csound can be integrated.)
 
-## 0.3.1
+### 0.3.1
 
 * Updated opcode entries to 6.15.0 (synced to Nate Whetsell's Atom language-csound plugin)
 
 ### 0.3.0
 
-* Added live-coding commands to evaluate ORC and SCO code by sending to Csound over UDP. 
+* Added live-coding commands to evaluate ORC and SCO code by sending to Csound over UDP.
 
 ### 0.2.3
 
