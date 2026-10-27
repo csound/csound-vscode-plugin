@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as commands from "./commands/csoundCommands";
+import { registerLegacyAliases } from "./commands/legacyAliases";
 import { getLatestCsoundLSP, registerCsoundStatusBar } from "./utils";
 
 import {
@@ -8,23 +9,41 @@ import {
     ServerOptions
 } from 'vscode-languageclient/node';
 
-let client: LanguageClient;
+let client: LanguageClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log("Csound's vscode plugin is now active!");
-    const lspPath = await getLatestCsoundLSP(context);
+
+    // Commands do not depend on the language server: register them first so they
+    // keep working when the LSP cannot be found, downloaded or started.
+    context.subscriptions.push(
+        vscode.commands.registerCommand("csound.runFile", commands.runFile),
+        vscode.commands.registerCommand("csound.saveAsAudioFile", commands.saveAsAudioFile),
+        vscode.commands.registerCommand("csound.stopExecution", commands.stopExecution),
+        vscode.commands.registerCommand("csound.openManual", commands.openManual),
+        vscode.commands.registerCommand("extension.csoundSelectExecutable", commands.selectCsoundExecutable),
+        vscode.commands.registerTextEditorCommand("extension.csoundEvalOrc", commands.evalOrc),
+        vscode.commands.registerTextEditorCommand("extension.csoundEvalSco", commands.evalSco),
+    );
+    registerLegacyAliases(context);
+
+    // status bar
+    registerCsoundStatusBar(context);
+
+    let lspPath: string | undefined;
+    try {
+        lspPath = await getLatestCsoundLSP(context);
+    } catch (err) {
+        console.error("Csound LSP setup failed:", err);
+        vscode.window.showWarningMessage(`Csound LSP could not be set up: ${err}`);
+    }
     // const lspPath = "/Users/pm/AcaHub/Coding/tree-sitter-csound/csound-lsp/target/release/csound-lsp"; // for local test
-    // const lspPath = "/Users/pm/AcaHub/Coding/tree-sitter-csound/csound-vscode-plugin/lsp-bin/csound-lsp-macos-aarch64-v1_3_52"; // for local test
     if (!lspPath) { return; }
 
     const serverOptions: ServerOptions = {
         command: lspPath,
         args: [],
     };
-
-    // if (vscode.env.uiKind === vscode.UIKind.Web) {
-    //     return;
-    // }
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
@@ -40,61 +59,20 @@ export async function activate(context: vscode.ExtensionContext) {
         clientOptions
     );
 
-    client.start();
-
-    // status bar
-    registerCsoundStatusBar(context);
-
     context.subscriptions.push({
-        dispose: () => client.stop()
+        dispose: () => client?.stop()
     });
 
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "csound.runFile",
-            commands.runFile,
-        )
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "csound.saveAsAudioFile",
-            commands.saveAsAudioFile,
-        )
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "csound.stopExecution",
-            commands.stopExecution,
-        )
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "csound.openManual",
-            commands.openManual,
-        )
-    );
-
-    // context.subscriptions.push(
-    //     vscode.commands.registerTextEditorCommand(
-    //         "extension.csoundEvalOrc",
-    //         commands.evalOrc
-    //     )
-    // );
-
-    // context.subscriptions.push(
-    //     vscode.commands.registerTextEditorCommand(
-    //         "extension.csoundEvalSco",
-    //         commands.evalSco
-    //     )
-    // );
-
+    try {
+        await client.start();
+    } catch (err) {
+        vscode.window.showErrorMessage(`Csound Language Server failed to start: ${err}`);
+    }
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-    commands.closeManualServer();
+    commands.stopExecution();
+    commands.closeManualServers();
     return client?.stop();
 }

@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 import * as dgram from "dgram";
 import { flash, getEvalText, getScoEvalText } from "../utils";
+import { showOpcodeReference } from "./showOpcodeReference";
 import path from "path";
 import * as fs from "fs";
 import * as http from "http";
@@ -12,7 +13,7 @@ const socket = dgram.createSocket("udp4");
 
 let output: vscode.OutputChannel;
 const processes = new Set<cp.ChildProcess>();
-let manualServer: http.Server | null = null;
+const manualServers = new Set<http.Server>();
 
 export async function selectCsoundExecutable() {
     const config = vscode.workspace.getConfiguration('csound');
@@ -157,60 +158,70 @@ export async function saveAsAudioFile() {
 }
 
 export async function openManual() {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) { return; }
+    let result: { action: string; path: string; } | undefined;
+    try {
+        result = await vscode.commands.executeCommand("csound-lsp.open_manual");
+    } catch (err) {
+        console.warn("Csound LSP manual unavailable:", err);
+    }
 
-    const result = await vscode.commands.executeCommand(
-        "csound-lsp.open_manual"
-    ) as unknown as { action: string; args: string; path: string; };
-    
-    if (result?.action === "open html csound manual") {
-        try {
-            const localUrl = await startManualLocalServer(result.path, { server: manualServer });
-            
-            const panel = vscode.window.createWebviewPanel(
-                "CsoundManual",
-                "Csound Manual",
-                vscode.ViewColumn.Beside,
-                { 
-                    enableScripts: true,
-                    enableForms: true,
-                }
-            );
+    // without the language server (or its local manual) fall back to the online manual
+    if (result?.action !== "open html csound manual") {
+        await showOpcodeReference();
+        return;
+    }
 
-            panel.webview.html = `
-                <!DOCTYPE html>
-                <html style="height: 100%; width: 100%; margin: 0; padding: 0;">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Csound Manual</title>
-                    <style>
-                        body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: white; }
-                        iframe { width: 100%; height: 100%; border: none; display: block; }
-                    </style>
-                </head>
-                <body>
-                    <iframe src="${localUrl}/index.html" width="100%" height="100%"></iframe>
-                </body>
-                </html>
-            `;
+    let server: http.Server | undefined;
+    try {
+        server = createManualServer(result.path);
+        manualServers.add(server);
+        const localUrl = await listenOnLocalhost(server);
 
-            panel.onDidDispose(() => {
-                if (manualServer) {
-                    manualServer.close();
-                    manualServer = null;
-                    console.log("Manual Server off.");
-                }
-            });
+        const panel = vscode.window.createWebviewPanel(
+            "CsoundManual",
+            "Csound Manual",
+            vscode.ViewColumn.Beside,
+            {
+                enableScripts: true,
+                enableForms: true,
+            }
+        );
 
-        } catch (err) {
-            vscode.window.showErrorMessage(`Manual server error: ${err}`);
-        }
+        panel.webview.html = `
+            <!DOCTYPE html>
+            <html style="height: 100%; width: 100%; margin: 0; padding: 0;">
+            <head>
+                <meta charset="UTF-8">
+                <title>Csound Manual</title>
+                <style>
+                    body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: white; }
+                    iframe { width: 100%; height: 100%; border: none; display: block; }
+                </style>
+            </head>
+            <body>
+                <iframe src="${localUrl}/index.html" width="100%" height="100%"></iframe>
+            </body>
+            </html>
+        `;
+
+        // each panel owns its server
+        const panelServer = server;
+        panel.onDidDispose(() => closeManualServer(panelServer));
+
+    } catch (err) {
+        if (server) { closeManualServer(server); }
+        vscode.window.showErrorMessage(`Manual server error: ${err}`);
     }
 }
 
-export function closeManualServer() {
-    if (manualServer) { manualServer.close(); }
+function closeManualServer(server: http.Server) {
+    server.close();
+    manualServers.delete(server);
+    console.log("Manual Server off.");
+}
+
+export function closeManualServers() {
+    for (const server of [...manualServers]) { closeManualServer(server); }
 }
 
 export function stopExecution() {
@@ -221,12 +232,8 @@ export function stopExecution() {
     processes.clear();
 }
 
-async function startManualLocalServer(rootPath: string, manualServer: { server: http.Server | null }): Promise<string> {
-    if (manualServer.server) { 
-        await new Promise(res => manualServer.server!.close(res)); 
-    }
-
-    manualServer.server = http.createServer((req, res) => {
+function createManualServer(rootPath: string): http.Server {
+    return http.createServer((req, res) => {
         if (req.method !== 'GET') {
             res.statusCode = 405;
             res.end();
@@ -275,10 +282,13 @@ async function startManualLocalServer(rootPath: string, manualServer: { server: 
             }
         });
     });
-    
+}
+
+function listenOnLocalhost(server: http.Server): Promise<string> {
     return new Promise((resolve, reject) => {
-        manualServer.server!.listen(0, "localhost", () => {
-            const address = manualServer.server!.address();
+        server.once("error", reject);
+        server.listen(0, "localhost", () => {
+            const address = server.address();
             if (address && typeof address !== 'string') {
                 console.log(`Start csound manual server on localhost:${address.port}`);
                 resolve(`http://localhost:${address.port}`);

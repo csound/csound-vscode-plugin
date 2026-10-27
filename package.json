@@ -24,32 +24,16 @@
                 "title": "Csound: Run Active Document"
             },
             {
+                "command": "csound.stopExecution",
+                "title": "Csound: Stop Running Csound"
+            },
+            {
                 "command": "csound.saveAsAudioFile",
                 "title": "Csound: Save As Audio File"
             },
             {
                 "command": "csound.openManual",
                 "title": "Csound: Open Csound Manual"
-            },
-            {
-                "command": "csound.stopExecution",
-                "title": "Csound: Terminate any running csound subprocess"
-            },
-            {
-                "command": "extension.csoundSelectExecutable",
-                "title": "Csound: Browse for Csound executable"
-            },
-            {
-                "command": "extension.csoundPlayActiveDocument",
-                "title": "Csound: Play Active Document"
-            },
-            {
-                "command": "extension.csoundKillCsoundProcess",
-                "title": "Csound: Terminate any running csound subprocess"
-            },
-            {
-                "command": "extension.csoundSelectExecutable",
-                "title": "Csound: Browse for Csound executable"
             },
             {
                 "command": "extension.csoundEvalOrc",
@@ -60,8 +44,20 @@
                 "title": "Csound: Evaluate Score Code"
             },
             {
+                "command": "extension.csoundSelectExecutable",
+                "title": "Csound: Browse for Csound executable"
+            },
+            {
+                "command": "extension.csoundPlayActiveDocument",
+                "title": "Csound: Play Active Document (legacy)"
+            },
+            {
+                "command": "extension.csoundKillCsoundProcess",
+                "title": "Csound: Terminate any running csound subprocess (legacy)"
+            },
+            {
                 "command": "extension.showOpcodeReference",
-                "title": "Csound: Show Csound help"
+                "title": "Csound: Show Csound help (legacy)"
             }
         ],
         "configuration": {
@@ -231,34 +227,54 @@
             {
                 "command": "csound.runFile",
                 "key": "alt+.",
-                "when": "editorFocus && editorLangId == csound"
-            },
-            {
-                "command": "csound.saveAsAudioFile",
-                "key": "alt+s",
-                "when": "editorFocus && editorLangId == csound"
+                "when": "editorTextFocus && editorLangId == csound"
             },
             {
                 "command": "csound.stopExecution",
                 "key": "alt+escape",
-                "when": "editorFocus && editorLangId == csound"
+                "when": "editorLangId == csound || focusedView == csound.webview"
+            },
+            {
+                "command": "csound.saveAsAudioFile",
+                "key": "alt+s",
+                "when": "editorTextFocus && editorLangId == csound && !isWeb"
             },
             {
                 "command": "csound.openManual",
                 "key": "alt+m",
-                "when": "editorFocus && editorLangId == csound"
+                "when": "editorTextFocus && editorLangId == csound"
             },
             {
-                "command": "extension.csoundPlayActiveDocument",
-                "key": "alt+.",
-                "when": "editorFocus"
-            },
-            {
-                "command": "extension.showOpcodeReference",
-                "key": "alt+m",
-                "when": "editorFocus"
+                "command": "extension.csoundEvalOrc",
+                "key": "ctrl+enter",
+                "mac": "cmd+enter",
+                "when": "editorTextFocus && editorLangId == csound"
             }
         ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "csound.saveAsAudioFile",
+                    "when": "!isWeb"
+                },
+                {
+                    "command": "extension.csoundSelectExecutable",
+                    "when": "!isWeb"
+                },
+                {
+                    "command": "extension.csoundPlayActiveDocument",
+                    "when": "false"
+                },
+                {
+                    "command": "extension.csoundKillCsoundProcess",
+                    "when": "false"
+                },
+                {
+                    "command": "extension.showOpcodeReference",
+                    "when": "false"
+                }
+            ]
+        },
         "views": {
             "explorer": [
                 {

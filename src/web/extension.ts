@@ -5,6 +5,7 @@ import { CsoundWebViewProvider } from "../webview/csoundWebViewProvider";
 import { LanguageClient, LanguageClientOptions } from 'vscode-languageclient/browser';
 import { ResolveIncludedUdoRequest } from "./utils";
 import { showOpcodeReference } from "../commands/showOpcodeReference";
+import { registerLegacyAliases } from "../commands/legacyAliases";
 
 async function getWasmBase64(uri: vscode.Uri): Promise<string> {
     const data = await vscode.workspace.fs.readFile(uri);
@@ -188,16 +189,17 @@ export async function activate(context: vscode.ExtensionContext) {
         return line.text;
     };
 
-    const showOpcodeReferenceCommand = vscode.commands.registerCommand(
-        "extension.showOpcodeReference", async () => {
+    // same public command IDs as the desktop entry point (src/extension.ts)
+    const openManualCommand = vscode.commands.registerCommand(
+        "csound.openManual", async () => {
             await showOpcodeReference();
         }
     );
-    context.subscriptions.push(showOpcodeReferenceCommand);
+    context.subscriptions.push(openManualCommand);
 
     // play command - now uses WebView
     const playCommand = vscode.commands.registerTextEditorCommand(
-        "extension.csoundPlayActiveDocument", async (textEditor: vscode.TextEditor) => {
+        "csound.runFile", async (textEditor: vscode.TextEditor) => {
             const content = getActiveDocumentContent(textEditor);
             if (content) {
                 // Use relative path from workspace instead of just filename
@@ -215,12 +217,15 @@ export async function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(playCommand);
 
-    const killCommand = vscode.commands.registerTextEditorCommand(
-        "extension.csoundKillCsoundProcess", () => {
+    // not an editor command: stopping must also work while the audio panel has focus
+    const stopCommand = vscode.commands.registerCommand(
+        "csound.stopExecution", () => {
             csoundWebViewProvider.stopCsound();
         }
     );
-    context.subscriptions.push(killCommand);
+    context.subscriptions.push(stopCommand);
+
+    registerLegacyAliases(context);
 
     const evalOrcCommand = vscode.commands.registerTextEditorCommand(
         "extension.csoundEvalOrc", (textEditor: vscode.TextEditor) => {
