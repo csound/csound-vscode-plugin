@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import * as https from "https";
+import { pipeline } from "stream";
 
 const starts = [
     [/^\s*instr/, "instr"],
@@ -124,7 +125,9 @@ export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Prom
     const isInstalledBinary = (f: string) =>
         (f.startsWith(binaryStem + "-") || f.startsWith(binaryName + "-")) && !f.endsWith(DOWNLOAD_SUFFIX);
     const installed = fs.existsSync(binDir) ? fs.readdirSync(binDir).filter(isInstalledBinary) : [];
-    const installedPath = installed.length > 0 ? path.join(binDir, installed.sort().pop()!) : undefined;
+    // pick the newest by numeric version (v1_10 > v1_9); leave `installed` intact for cleanup
+    const newest = [...installed].sort((a, b) => compareVersions(tagOf(a, binaryStem), tagOf(b, binaryStem))).pop();
+    const installedPath = newest ? path.join(binDir, newest) : undefined;
 
     let relTag: string;
     try {
@@ -171,7 +174,7 @@ export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Prom
         fs.renameSync(tmpPath, fullPath);
 
     } catch (err) {
-        if (fs.existsSync(tmpPath)) { fs.unlinkSync(tmpPath); }
+        try { fs.rmSync(tmpPath, { force: true }); } catch (e) { console.warn("Could not remove partial download:", e); }
         vscode.window.showErrorMessage(`Csound LSP update failed: ${err}`);
         return installedPath;
     }
@@ -188,34 +191,57 @@ export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Prom
     return fullPath;
 }
 
+// installed file name -> its release tag, e.g. "v1_3_52"
+function tagOf(fileName: string, binaryStem: string): string {
+    return fileName.slice(binaryStem.length);
+}
+
+function compareVersions(a: string, b: string): number {
+    const pa = (a.match(/\d+/g) ?? []).map(Number);
+    const pb = (b.match(/\d+/g) ?? []).map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+        if (diff !== 0) { return diff; }
+    }
+    return 0;
+}
+
+const MAX_REDIRECTS = 5;
+const DOWNLOAD_IDLE_TIMEOUT_MS = 30000;
+
+// The caller removes destPath on rejection.
 function downloadFile(
-    url: string, destPath: string, progress: vscode.Progress<{ message?: string; increment?: number }>
+    url: string, destPath: string, progress: vscode.Progress<{ message?: string; increment?: number }>,
+    redirectsLeft = MAX_REDIRECTS
 ): Promise<void> {
     return new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(destPath);
-
         const request = https.get(url, (response) => {
-            if (response.statusCode === 302 || response.statusCode === 301) {
-                if (response.headers.location) {
-                    file.close();
-                    downloadFile(response.headers.location, destPath, progress)
-                        .then(resolve)
-                        .catch(reject);
+            const status = response.statusCode ?? 0;
+            if ([301, 302, 303, 307, 308].includes(status) && response.headers.location) {
+                response.resume();
+                if (redirectsLeft === 0) {
+                    reject(new Error("Too many redirects"));
                     return;
                 }
+                const next = new URL(response.headers.location, url).toString();
+                downloadFile(next, destPath, progress, redirectsLeft - 1).then(resolve, reject);
+                return;
             }
 
-            if (response.statusCode !== 200) {
-                file.close();
-                fs.unlink(destPath, () => {});
-                reject(new Error(`Status code HTTP: ${response.statusCode}`));
+            if (status !== 200) {
+                response.resume();
+                reject(new Error(`Status code HTTP: ${status}`));
                 return;
             }
 
             const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
             let receivedBytes = 0;
 
-            response.pipe(file);
+            // create the file only for the final response; pipeline rejects on any
+            // failure of either stream (open error, aborted connection, write error)
+            pipeline(response, fs.createWriteStream(destPath), (err) => {
+                if (err) { reject(err); } else { resolve(); }
+            });
 
             response.on('data', (chunk) => {
                 receivedBytes += chunk.length;
@@ -228,22 +254,11 @@ function downloadFile(
                     progress.report({ message: `${mb} MB` });
                 }
             });
-
-            file.on('finish', () => {
-                file.close();
-                resolve();
-            });
-
-            file.on('error', (err) => {
-                fs.unlink(destPath, () => {});
-                reject(err);
-            });
         });
 
-        request.on('error', (err) => {
-            fs.unlink(destPath, () => {});
-            reject(err);
-        });
+        // a stalled connection destroys the socket, which also fails the pipeline
+        request.setTimeout(DOWNLOAD_IDLE_TIMEOUT_MS, () => request.destroy(new Error("Download timed out")));
+        request.on('error', reject);
     });
 }
 
@@ -254,6 +269,7 @@ function getLatestReleaseTag(): Promise<string> {
             path: `/repos/PasqualeMainolfi/csound-lsp/releases/latest`,
             method: 'GET',
             headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 'User-Agent': 'VSCode-Csound-Extension'
             }
         };
@@ -292,16 +308,14 @@ export function registerCsoundStatusBar(context: vscode.ExtensionContext) {
     context.subscriptions.push(csoundControls);
 
     context.subscriptions.push(vscode.commands.registerCommand("csound.showStatusBarActions", async () => {
-        const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
-
-        const actions: { label: string; command: string }[] = isWeb
-            ? []
-            : [
-                { label: "$(play-circle) Run", command: "csound.runFile" },
-                { label: "$(stop-circle) Stop", command: "csound.stopExecution" },
-                { label: "$(unmute) Generate Audio File", command: "csound.saveAsAudioFile" },
-                { label: "$(book) Manual", command: "csound.openManual" }
-            ];
+        // only registered by the Node entry point, so all native actions are available
+        // (also in browser-based UIs such as Codespaces, where this runs on the remote host)
+        const actions: { label: string; command: string }[] = [
+            { label: "$(play-circle) Run", command: "csound.runFile" },
+            { label: "$(stop-circle) Stop", command: "csound.stopExecution" },
+            { label: "$(unmute) Generate Audio File", command: "csound.saveAsAudioFile" },
+            { label: "$(book) Manual", command: "csound.openManual" }
+        ];
 
         const choice = await vscode.window.showQuickPick(actions, {
             placeHolder: "Csound actions"

@@ -232,7 +232,7 @@
             {
                 "command": "csound.saveAsAudioFile",
                 "key": "alt+s",
-                "when": "editorTextFocus && editorLangId == csound && !isWeb"
+                "when": "editorTextFocus && editorLangId == csound && csound.nativeHost"
             },
             {
                 "command": "csound.openManual",
@@ -250,11 +250,11 @@
             "commandPalette": [
                 {
                     "command": "csound.saveAsAudioFile",
-                    "when": "!isWeb"
+                    "when": "csound.nativeHost"
                 },
                 {
                     "command": "extension.csoundSelectExecutable",
-                    "when": "!isWeb"
+                    "when": "csound.nativeHost"
                 },
                 {
                     "command": "extension.csoundPlayActiveDocument",
