@@ -89,6 +89,8 @@ export const flash = function (textEditor:vscode.TextEditor, range:vscode.Range)
     }, 250);
 };
 
+const DOWNLOAD_SUFFIX = ".download";
+
 export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Promise<string | undefined> {
     const binDir = path.join(context.extensionPath, 'lsp-bin');
     const platform = os.platform();
@@ -114,62 +116,72 @@ export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Prom
         return undefined;
     }
 
-    const relTag = await getLatestReleaseTag();
+    // installed binaries are named <binaryName>-<tag>, e.g. csound-lsp-macos-aarch64-v1_3_52
+    const installed = fs.existsSync(binDir)
+        ? fs.readdirSync(binDir).filter(f => f.startsWith(binaryName + "-") && !f.endsWith(DOWNLOAD_SUFFIX))
+        : [];
+    const installedPath = installed.length > 0 ? path.join(binDir, installed.sort().pop()!) : undefined;
+
+    let relTag: string;
+    try {
+        relTag = await getLatestReleaseTag();
+    } catch (err) {
+        // offline or rate limited: keep using what is installed
+        console.warn("Csound LSP update check failed:", err);
+        if (!installedPath) {
+            vscode.window.showWarningMessage(`No Csound LSP installed and the latest release could not be fetched: ${err}`);
+        }
+        return installedPath;
+    }
 
     const fullPath = path.join(binDir, binaryName + "-" + relTag.replaceAll(".", "_"));
     if (fs.existsSync(fullPath)) { return fullPath; }
 
     const inform = await vscode.window.showInformationMessage(
-        "A new version of the Csound LSP is available. Do you want to install or update it?",
+        installedPath
+            ? "A new version of the Csound LSP is available. Do you want to update it?"
+            : "The Csound LSP is not installed. Do you want to install it?",
         "Yes", "No"
     );
 
-    if (inform === "Yes") {
-        if (!fs.existsSync(binDir)) {
-            fs.mkdirSync(binDir, { recursive: true });
-        } else {
-            const files = fs.readdirSync(binDir);
-            for (const file of files) {
-                fs.unlinkSync(path.join(binDir, file));
-            }
-        }
-
-        const downloadUrl = `https://github.com/PasqualeMainolfi/csound-lsp/releases/latest/download/${binaryName}`;
-
-        try {
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: `Csound LSP installation (${binaryName})...`,
-                cancellable: false
-            }, async (progress) => { await downloadFile(downloadUrl, fullPath, progress); });
-
-            vscode.window.showInformationMessage("Csound LSP is now available!");
-
-        } catch (err) {
-            vscode.window.showErrorMessage(`Something went wrong: ${err}`);
-            if (fs.existsSync(fullPath)) { fs.unlinkSync(fullPath); }
-            return undefined;
-        }
-
-        if (platform !== 'win32') {
-            try {
-                fs.chmodSync(fullPath, '755');
-            } catch (e) {
-                console.warn("permission denied +x:", e);
-            }
-        }
-
-        return fullPath;
-    } else {
-        const files = fs.existsSync(binDir) ? fs.readdirSync(binDir) : [];
-        const lspFile = files.find(f => f.startsWith("csound-lsp"));
-        if (!lspFile) {
-            vscode.window.showWarningMessage("No Csound LSP found!");
-            return undefined;
-        }
-        return path.join(binDir, lspFile);
+    if (inform !== "Yes") {
+        if (!installedPath) { vscode.window.showWarningMessage("No Csound LSP found!"); }
+        return installedPath;
     }
 
+    fs.mkdirSync(binDir, { recursive: true });
+    const downloadUrl = `https://github.com/PasqualeMainolfi/csound-lsp/releases/latest/download/${binaryName}`;
+    // download next to the target and swap in only once complete, so a failed
+    // update leaves the current installation untouched
+    const tmpPath = fullPath + DOWNLOAD_SUFFIX;
+
+    try {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Csound LSP installation (${binaryName})...`,
+            cancellable: false
+        }, async (progress) => { await downloadFile(downloadUrl, tmpPath, progress); });
+
+        if (fs.statSync(tmpPath).size === 0) { throw new Error("downloaded file is empty"); }
+        if (platform !== 'win32') { fs.chmodSync(tmpPath, 0o755); }
+        fs.renameSync(tmpPath, fullPath);
+
+    } catch (err) {
+        if (fs.existsSync(tmpPath)) { fs.unlinkSync(tmpPath); }
+        vscode.window.showErrorMessage(`Csound LSP update failed: ${err}`);
+        return installedPath;
+    }
+
+    for (const old of installed) {
+        try {
+            fs.unlinkSync(path.join(binDir, old));
+        } catch (e) {
+            console.warn("Could not remove old Csound LSP:", e);
+        }
+    }
+
+    vscode.window.showInformationMessage("Csound LSP is now available!");
+    return fullPath;
 }
 
 function downloadFile(
@@ -260,6 +272,7 @@ function getLatestReleaseTag(): Promise<string> {
             });
         });
 
+        req.setTimeout(5000, () => req.destroy(new Error("GitHub API request timed out")));
         req.on('error', (e) => reject(e));
         req.end();
     });
@@ -274,7 +287,7 @@ export function registerCsoundStatusBar(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(csoundControls);
 
-    vscode.commands.registerCommand("csound.showStatusBarActions", async () => {
+    context.subscriptions.push(vscode.commands.registerCommand("csound.showStatusBarActions", async () => {
         const isWeb = vscode.env.uiKind === vscode.UIKind.Web;
 
         const actions: { label: string; command: string }[] = isWeb
@@ -293,5 +306,5 @@ export function registerCsoundStatusBar(context: vscode.ExtensionContext) {
         if (!choice) { return; }
 
         vscode.commands.executeCommand(choice.command);
-    });
+    }));
 }
