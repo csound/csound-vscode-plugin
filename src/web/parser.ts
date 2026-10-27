@@ -194,7 +194,7 @@ export function parseUdoFile(udoFile: UdoFile, parser: Parser) {
     if (content) {
         const tree = parser.parse(content);
         const rootNode = tree?.rootNode;
-        if (!rootNode) { return; }
+        if (!tree || !rootNode) { return; }
         let toVisit: Node[] = [rootNode];
         let userLocalDefinitions = initializeUserDefinitions();
 
@@ -259,6 +259,8 @@ export function parseUdoFile(udoFile: UdoFile, parser: Parser) {
         udoFile.userDefinedOpcodes = userLocalDefinitions.userDefinedOpcodes;
         udoFile.userDefinedTypes = userLocalDefinitions.userDefinedTypes;
         udoFile.userDefinedMacros = userLocalDefinitions.userDefinedMacros;
+        // only extracted text is kept: free the WASM tree
+        tree.delete();
     }
 }
 
@@ -293,6 +295,8 @@ export function updateTree(parser: Parser, document: TextDocument, docs: Map<str
             includedUdoFiles: oldState ? oldState.includedUdoFiles : new Map<string, UdoFile>(),
             unresolvedUdoFiles: oldState ? oldState.unresolvedUdoFiles : new Set<string>()
         });
+        // trees live in WASM memory and are not garbage collected
+        oldState?.tree?.delete();
     }
 }
 
@@ -447,8 +451,7 @@ export function isValidType(typeIdentifier: string): boolean {
 }
 
 export function iterateTree(tree: Tree, macros: any): TreeReport {
-    const rootNode = tree.rootNode.walk();
-    let toVisit = [rootNode.currentNode];
+    let toVisit = [tree.rootNode];
     let report = initializeTreeReport();
     let hasCabbageStart = false;
     let hasCabbageAraStart = false;

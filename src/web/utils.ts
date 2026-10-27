@@ -218,6 +218,8 @@ export function getInjections(
         if (!subTree) { continue; }
 
         const currentTokens = getSemanticTokens(lang.query, subTree, blockContent);
+        // token.node is not read after this point, so the injected tree can be freed
+        subTree.delete();
         for (const token of currentTokens) {
             const absoluteLine = block.startPosition.row + token.line;
             const absoluteChar = (token.line === 0)

@@ -241,6 +241,7 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
 });
 
 documents.onDidClose(params => {
+    docs.get(params.document.uri)?.tree?.delete();
     docs.delete(params.document.uri);
 });
 
