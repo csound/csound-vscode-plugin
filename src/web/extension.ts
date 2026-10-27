@@ -31,9 +31,10 @@ function resolveInclude(fromPath: string, includedFile: string): vscode.Uri {
     const baseDir = baseUri.with({
         path: baseUri.path.substring(0, lastSlash)
     });
-    if (includedFile.startsWith('/') || includedFile.startsWith('.')) {
+    if (includedFile.startsWith('/')) {
         return baseUri.with({ path: includedFile });
     }
+    // joinPath normalizes "./" and "../" against the including file's directory
     return vscode.Uri.joinPath(baseDir, includedFile);
 }
 
