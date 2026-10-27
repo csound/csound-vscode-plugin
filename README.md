@@ -70,7 +70,6 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing or rendering the current file. Choosing "Always silently save before playing" in the prompt sets it. |
 | `csound.UDPAddress`         | `127.0.0.1`   | Address to send live coding evaluations over UDP. |
 | `csound.UDPPort`            | `10000`       | Port to send live coding evaluations over UDP. |
-| `csound.htmlFilePath`       | `""`          | No longer used: the manual is now bundled with the language server. |
 
 ## Known Issues
 
@@ -87,6 +86,7 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 * One command per action on desktop and web; new command IDs (`csound.runFile`, `csound.stopExecution`, `csound.openManual`, `csound.saveAsAudioFile`), with the previous IDs kept as aliases.
 * New `Csound: Save As Audio File` command (`alt+s`).
 * Requires VS Code 1.82 or later.
+* Removed the `csound.htmlFilePath` setting: the manual is now bundled with the language server.
 
 ### 0.7.0
 

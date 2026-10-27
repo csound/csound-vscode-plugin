@@ -89,11 +89,6 @@
                     "type": "number",
                     "default": 10000,
                     "description": "Port to send live coding evaluations over UDP."
-                },
-                "csound.htmlFilePath": {
-                    "type": "string",
-                    "default": "",
-                    "description": "The path to the directory containing HTML opcode files."
                 }
             }
         },
