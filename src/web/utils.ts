@@ -232,6 +232,22 @@ export function getInjections(
     return allInjections;
 }
 
+// Raw strings and embedded languages (Python, HTML, Cabbage JSON, CsTest TOML): their
+// leading whitespace is program content, so formatting must not touch it.
+const PRESERVED_NODE_TYPES = ["internal_raw_block", "strong_string", "raw_script", "cabbage_json_block"];
+
+// Lines whose first character lies inside a preserved node.
+export function getPreservedLines(rootNode: Node, lineCount: number): boolean[] {
+    const preserved = new Array<boolean>(lineCount).fill(false);
+    for (const node of rootNode.descendantsOfType(PRESERVED_NODE_TYPES)) {
+        const { startPosition: start, endPosition: end } = node;
+        // a node ending at column 0 stops right before that line
+        const lastRow = end.column > 0 ? end.row : end.row - 1;
+        for (let i = start.row + 1; i <= lastRow && i < lineCount; i++) { preserved[i] = true; }
+    }
+    return preserved;
+}
+
 export function getUnusedLabelFromKind(kind: string): string {
     switch (kind) {
         case "label_statement":

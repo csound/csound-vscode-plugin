@@ -10,6 +10,7 @@ import {
     getUnusedLabelFromKind,
     getUndefinedLabelFromKind,
     getCleanNodeText,
+    getPreservedLines,
     ResolveIncludedUdoResult
 } from './utils';
 
@@ -629,7 +630,9 @@ connection.onDocumentFormatting((params: DocumentFormattingParams): TextEdit[] =
             };
         }
 
+        const preserved = getPreservedLines(rootNode, textLines.length);
         for (let i = 0; i < indents.length; i++) {
+            if (preserved[i]) { continue; }
             const line = textLines[i];
             if (line.trim().length === 0) {
                 if (line.length > 0) {
