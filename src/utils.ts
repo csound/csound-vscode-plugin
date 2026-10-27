@@ -116,10 +116,14 @@ export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Prom
         return undefined;
     }
 
-    // installed binaries are named <binaryName>-<tag>, e.g. csound-lsp-macos-aarch64-v1_3_52
-    const installed = fs.existsSync(binDir)
-        ? fs.readdirSync(binDir).filter(f => f.startsWith(binaryName + "-") && !f.endsWith(DOWNLOAD_SUFFIX))
-        : [];
+    // installed binaries are named <stem>-<tag><ext>, e.g. csound-lsp-macos-aarch64-v1_3_52
+    // or csound-lsp-windows-x86_64-v1_3_52.exe; the tag goes before ".exe" so Windows
+    // still sees an executable. <binaryName>-<tag> is the old Windows layout, matched so
+    // those installs are reused and cleaned up on the next update.
+    const { name: binaryStem, ext: binaryExt } = path.parse(binaryName);
+    const isInstalledBinary = (f: string) =>
+        (f.startsWith(binaryStem + "-") || f.startsWith(binaryName + "-")) && !f.endsWith(DOWNLOAD_SUFFIX);
+    const installed = fs.existsSync(binDir) ? fs.readdirSync(binDir).filter(isInstalledBinary) : [];
     const installedPath = installed.length > 0 ? path.join(binDir, installed.sort().pop()!) : undefined;
 
     let relTag: string;
@@ -134,7 +138,7 @@ export async function getLatestCsoundLSP(context: vscode.ExtensionContext): Prom
         return installedPath;
     }
 
-    const fullPath = path.join(binDir, binaryName + "-" + relTag.replaceAll(".", "_"));
+    const fullPath = path.join(binDir, `${binaryStem}-${relTag.replaceAll(".", "_")}${binaryExt}`);
     if (fs.existsSync(fullPath)) { return fullPath; }
 
     const inform = await vscode.window.showInformationMessage(
