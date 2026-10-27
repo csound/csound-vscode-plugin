@@ -12,6 +12,9 @@ const csoundGrammarPath = fs.existsSync(path.join(localCsoundGrammarPath, 'tree-
 	? localCsoundGrammarPath
 	: path.resolve(__dirname, 'node_modules/tree-sitter-csound');
 
+// web extension and LSP worker are type-checked against WebWorker libs, not Node or DOM
+const webTsConfig = path.resolve(__dirname, 'src/web/tsconfig.json');
+
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
@@ -41,7 +44,8 @@ const webExtensionConfig = {
 			test: /\.ts$/,
 			exclude: /node_modules/,
 			use: [{
-				loader: 'ts-loader'
+				loader: 'ts-loader',
+				options: { configFile: webTsConfig }
 			}]
 		}]
 	},
@@ -99,7 +103,7 @@ const lspServerConfig = {
 		rules: [{
 			test: /\.ts$/,
 			exclude: /node_modules/,
-			use: [{ loader: 'ts-loader' }]
+			use: [{ loader: 'ts-loader', options: { configFile: webTsConfig } }]
 		}]
 	},
 	plugins: [

@@ -1,6 +1,3 @@
-/// <reference lib="webworker" />
-/// <reference lib="dom" />
-
 import { DiagnosticSeverity, DiagnosticTag, TextDocumentSyncKind } from 'vscode-languageserver';
 import { TextDocument, TextEdit } from 'vscode-languageserver-textdocument';
 import { Parser, Language, Query, Point, Node } from 'web-tree-sitter';

@@ -10,6 +10,7 @@
 		"strict": true,   /* enable all strict type-checking options */
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
+		"skipLibCheck": true, /* @types/glob 7 does not match the hoisted minimatch typings */
 		/* Additional Checks */
 		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
@@ -17,6 +18,9 @@
 	},
 	"exclude": [
 		"node_modules",
-		".vscode-test"
+		".vscode-test",
+		// web extension, LSP worker and webview have their own tsconfig (DOM/WebWorker libs)
+		"src/web",
+		"src/webview"
 	]
 }

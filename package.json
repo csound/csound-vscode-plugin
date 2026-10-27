@@ -277,7 +277,8 @@
         "update-web-opcodes": "python3 scripts/build_web_opcodes.py",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p -w . --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "check-web": "tsc -p src/web/tsconfig.json --noEmit",
+        "pretest": "npm run compile-tests && npm run check-web && npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },

@@ -1,17 +1,21 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "lib": ["ES2022", "DOM", "WebWorker"],
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "strict": false,
-        "noImplicitAny": false,
-        "typeRoots": ["./types", "../../node_modules/@types"]
-    },
-    "include": [
-        "**/*.ts",
-    ]
+	// web extension host and LSP worker: no Node and no DOM, only WebWorker globals
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"lib": [
+			"ES2022",
+			"WebWorker"
+		],
+		"types": [
+			"webpack-env",
+			"mocha"
+		],
+		"rootDir": ".."
+	},
+	"include": [
+		"./**/*.ts",
+		"../webview/csoundWebViewProvider.ts",
+		"../commands/showOpcodeReference.ts"
+	],
+	"exclude": []
 }
