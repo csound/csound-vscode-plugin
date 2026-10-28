@@ -326,7 +326,7 @@
         "install": "^0.13.0",
         "path-browserify": "^1.0.1",
         "tree-sitter-bash": "^0.25.1",
-        "tree-sitter-csound": "github:PasqualeMainolfi/tree-sitter-csound",
+        "tree-sitter-csound": "^1.6.3",
         "tree-sitter-html": "^0.23.2",
         "tree-sitter-json": "^0.24.8",
         "tree-sitter-python": "^0.25.0",
