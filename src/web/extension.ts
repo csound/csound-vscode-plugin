@@ -53,6 +53,9 @@ async function parseJsonData(path: vscode.Uri) {
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
+    // A web extension host can run inside the desktop UI; suppress native-only commands.
+    await vscode.commands.executeCommand("setContext", "csound.host", "web");
+
     const webBaseUri = vscode.Uri.joinPath(context.extensionUri, 'dist/web');
     const serverMain = vscode.Uri.joinPath(webBaseUri, 'server.js');
     const coreWasmUri = vscode.Uri.joinPath(webBaseUri, 'web-tree-sitter.wasm');

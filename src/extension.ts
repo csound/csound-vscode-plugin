@@ -29,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Native-only commands depend on which entry point runs, not on the UI kind:
     // a browser UI (e.g. Codespaces) can still run this extension in a remote Node host.
-    vscode.commands.executeCommand("setContext", "csound.nativeHost", true);
+    await vscode.commands.executeCommand("setContext", "csound.host", "native");
 
     // status bar
     registerCsoundStatusBar(context);
