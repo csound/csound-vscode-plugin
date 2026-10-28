@@ -13,6 +13,8 @@ const socket = dgram.createSocket("udp4");
 
 let output: vscode.OutputChannel;
 const processes = new Set<cp.ChildProcess>();
+// the run that owns the output channel; a stopped run may still flush output after it
+let currentProcess: cp.ChildProcess | undefined;
 const manualServers = new Set<http.Server>();
 
 export async function selectCsoundExecutable() {
@@ -122,6 +124,9 @@ async function runCsound(outputArgs: (file: string) => string[]) {
     const command = config.get<string>("executable", "csound");
     const args = [...outputArgs(document.fileName), ...files];
 
+    // one run at a time: a second Run would otherwise mix its output with the first
+    stopExecution();
+
     output.clear();
     output.show(true); // keep focus in the editor
     output.appendLine(`$ ${command} ${args.join(" ")}`);
@@ -129,9 +134,12 @@ async function runCsound(outputArgs: (file: string) => string[]) {
     // argument array (no shell): paths with spaces stay one argument
     const proc = cp.spawn(command, args, { cwd: path.dirname(document.fileName) });
     processes.add(proc);
+    currentProcess = proc;
 
     // csound writes most of its output to stderr; strip stray 'ANSI reset color' sequences
-    const append = (data: Buffer) => output.append(data.toString().replace(/\x1b\[m/g, ""));
+    const append = (data: Buffer) => {
+        if (proc === currentProcess) { output.append(data.toString().replace(/\x1b\[m/g, "")); }
+    };
     proc.stdout.on("data", append);
     proc.stderr.on("data", append);
     proc.on("error", (err) => {
@@ -140,7 +148,7 @@ async function runCsound(outputArgs: (file: string) => string[]) {
     });
     proc.on("close", (code) => {
         processes.delete(proc);
-        output.appendLine(`\n[csound exited with code ${code}]`);
+        if (proc === currentProcess) { output.appendLine(`\n[csound exited with code ${code}]`); }
     });
 }
 
