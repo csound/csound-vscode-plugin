@@ -1,16 +1,16 @@
 {
     "comments": {
         // symbol used for single line comment. Remove this entry if your language does not support line comments
-        //"lineComment": "//",
         "lineComment": ";",
         // symbols used for start and end a block comment. Remove this entry if your language does not support block comments
-        "blockComment": [ "/*", "*/" ]
+        "blockComment": ["/*", "*/"]
     },
     // symbols used as brackets
     "brackets": [
-        ["{", "}"],
         ["[", "]"],
-        ["(", ")"]
+        ["(", ")"],
+        ["{", "}"],
+        ["{{", "}}"]
     ],
     // symbols that are auto closed when typing
     "autoClosingPairs": [
@@ -18,9 +18,7 @@
         ["[", "]"],
         ["(", ")"],
         ["\"", "\""],
-        ["'", "'"],
-        { "open": "/**", "close": " */", "notIn": ["string"] }
-
+        ["'", "'"]
     ],
     // symbols that that can be used to surround a selection
     "surroundingPairs": [
@@ -35,5 +33,9 @@
             "start": "^\\s*(;|//.)\\s*#?region\\b",
             "end": "^\\s*(;|//.)\\s*#?endregion\\b"
         }
+    },
+    "indentationRules": {
+        "increaseIndentPattern": "^\\s*(instr|opcode|if|else|elseif|while|until|for|switch|case|default|.*\\{\\{)\\b",
+        "decreaseIndentPattern": "^\\s*(endin|endop|endif|fi|else|elseif|endsw|od|case|default|\\}\\})\\b"
     }
 }

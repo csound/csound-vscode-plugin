@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 
 export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'csound.webview';
-    
+
     private _view?: vscode.WebviewView;
     private _csoundReady = false;
     private _messageQueue: any[] = [];
@@ -24,7 +23,9 @@ export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
             // Allow scripts in the webview
             enableScripts: true,
             localResourceRoots: [
-                this._extensionUri
+                // this._extensionUri
+                vscode.Uri.joinPath(this._extensionUri, 'dist'),
+                vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview'),
             ]
         };
 
@@ -65,7 +66,7 @@ export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
     public async playCsd(csdContent: string, filename?: string) {
         // Collect project files
         const projectFiles = await this.collectProjectFiles();
-        
+
         const message = {
             command: 'playCsd',
             content: csdContent,
@@ -144,7 +145,13 @@ export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'wasm-unsafe-eval' 'unsafe-inline' data: blob:; worker-src 'self' data: blob: 'unsafe-inline'; connect-src data: blob:; child-src data: blob:;">
+                <meta http-equiv="Content-Security-Policy"
+                    content="default-src 'none';
+                    style-src ${webview.cspSource} 'unsafe-inline';
+                    script-src 'nonce-${nonce}' 'wasm-unsafe-eval' 'unsafe-inline' data: blob:;
+                    worker-src 'self' blob: data:;
+                    connect-src 'self' data: blob: https:;
+                    img-src 'self' data: https:;">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <link href="${styleResetUri}" rel="stylesheet">
                 <link href="${styleVSCodeUri}" rel="stylesheet">
@@ -230,13 +237,13 @@ export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
                         <span class="status-text" id="engineStatus">Not initialized</span>
                     </div>
                 </div>
-                
+
                 <div class="content">
                     <p style="color: var(--vscode-descriptionForeground); font-size: 12px; margin: 0;">
                         Use the Csound controls above to manage the running performance.
                     </p>
                 </div>
-                
+
                 <script nonce="${nonce}" src="${scriptUri}"></script>
             </body>
             </html>`;
@@ -244,37 +251,37 @@ export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
 
     private async collectProjectFiles(): Promise<{[path: string]: string}> {
         const projectFiles: {[path: string]: string} = {};
-        
+
         console.log('collectProjectFiles: Starting file collection...');
-        
+
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
             const workspaceFolder = vscode.workspace.workspaceFolders[0];
             console.log(`collectProjectFiles: Workspace folder: ${workspaceFolder.uri.fsPath}`);
-            
+
             try {
                 // Find all relevant files in the workspace
                 const pattern = new vscode.RelativePattern(workspaceFolder, '**/*.{csd,orc,sco,wav,aif,aiff,txt,inc}');
                 console.log(`collectProjectFiles: Searching with pattern: ${pattern.pattern}`);
                 const files = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
                 console.log(`collectProjectFiles: Found ${files.length} files`);
-                
+
                 for (const file of files) {
                     try {
                         const content = await vscode.workspace.fs.readFile(file);
                         const relativePath = vscode.workspace.asRelativePath(file);
                         console.log(`collectProjectFiles: Processing ${relativePath}`);
-                        
+
                         // Convert to string (assuming text files for now)
                         // For binary files like WAV, we'd need different handling
                         if (file.path.match(/\.(wav|aif|aiff)$/i)) {
                             console.log(`collectProjectFiles: Skipping binary file ${relativePath}`);
                             continue;
                         }
-                        
+
                         // CRITICAL FIX #2: Store files with absolute paths starting with /
                         // This allows parent directory includes like "../chain.orc" to work
                         const absolutePath = '/' + relativePath;
-                        
+
                         // Convert Uint8Array to string (Buffer is not available in web context)
                         const decoder = new (globalThis as any).TextDecoder('utf-8');
                         projectFiles[absolutePath] = decoder.decode(content);
@@ -289,7 +296,7 @@ export class CsoundWebViewProvider implements vscode.WebviewViewProvider {
         } else {
             console.log('collectProjectFiles: No workspace folders found');
         }
-        
+
         console.log(`collectProjectFiles: Collected ${Object.keys(projectFiles).length} files total`);
         return projectFiles;
     }

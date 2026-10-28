@@ -1,5 +1,8 @@
+.DS_Store
 out
 dist
 node_modules
 .vscode-test/
 *.vsix
+img_features/
+lsp-bin/

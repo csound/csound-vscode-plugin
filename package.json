@@ -5,37 +5,35 @@
     "version": "0.7.0",
     "publisher": "kunstmusik",
     "engines": {
-        "vscode": "^1.75.0"
+        "vscode": "^1.82.0"
     },
     "categories": [
         "Programming Languages"
     ],
     "main": "./dist/extension.js",
     "browser": "./dist/web/extension.js",
-    "activationEvents": [
-        "onLanguage:csound-csd",
-        "onLanguage:csound-orc",
-        "onLanguage:csound-sco",
-        "onCommand:extension.csoundPlayActiveDocument",
-        "onCommand:extension.csoundKillCsoundProcess",
-        "onCommand:extension.csoundEvalOrc",
-        "onCommand:extension.csoundEvalSco",
-        "onCommand:extension.showOpcodeReference",
-        "onView:csound.webview"
+    "extensionKind": [
+        "workspace",
+        "ui"
     ],
+    "activationEvents": [],
     "contributes": {
         "commands": [
             {
-                "command": "extension.csoundPlayActiveDocument",
-                "title": "Csound: Play Active Document"
+                "command": "csound.runFile",
+                "title": "Csound: Run Active Document"
             },
             {
-                "command": "extension.csoundKillCsoundProcess",
-                "title": "Csound: Terminate any running csound subprocess"
+                "command": "csound.stopExecution",
+                "title": "Csound: Stop Running Csound"
             },
             {
-                "command": "extension.csoundSelectExecutable",
-                "title": "Csound: Browse for Csound executable"
+                "command": "csound.saveAsAudioFile",
+                "title": "Csound: Save As Audio File"
+            },
+            {
+                "command": "csound.openManual",
+                "title": "Csound: Open Csound Manual"
             },
             {
                 "command": "extension.csoundEvalOrc",
@@ -46,8 +44,20 @@
                 "title": "Csound: Evaluate Score Code"
             },
             {
+                "command": "extension.csoundSelectExecutable",
+                "title": "Csound: Browse for Csound executable"
+            },
+            {
+                "command": "extension.csoundPlayActiveDocument",
+                "title": "Csound: Play Active Document (legacy)"
+            },
+            {
+                "command": "extension.csoundKillCsoundProcess",
+                "title": "Csound: Terminate any running csound subprocess (legacy)"
+            },
+            {
                 "command": "extension.showOpcodeReference",
-                "title": "Csound: Show Csound help"
+                "title": "Csound: Show Csound help (legacy)"
             }
         ],
         "configuration": {
@@ -68,7 +78,7 @@
                 "csound.saveSilentlyOnPlay": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Save without prompting before playing the current file."
+                    "description": "Save the active document without asking before running or rendering it with Csound."
                 },
                 "csound.UDPAddress": {
                     "type": "string",
@@ -79,111 +89,194 @@
                     "type": "number",
                     "default": 10000,
                     "description": "Port to send live coding evaluations over UDP."
-                },
-                "csound.showHints": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Displays syntax hints."
-                },
-                "csound.htmlFilePath": {
-                    "type": "string",
-                    "default": "",
-                    "description": "The path to the directory containing HTML opcode files."
                 }
             }
         },
         "languages": [
             {
-                "id": "csound-orc",
+                "id": "csound",
                 "aliases": [
-                    "Csound ORC",
-                    "csound-orc"
+                    "Csound",
+                    "csound"
                 ],
                 "extensions": [
-                    ".orc",
                     ".udo",
+                    ".orc",
+                    ".csd",
+                    ".sco",
                     ".instr"
                 ],
-                "configuration": "./language-configuration.json"
-            },
-            {
-                "id": "csound-sco",
-                "aliases": [
-                    "Csound SCO",
-                    "csound-sco"
-                ],
-                "extensions": [
-                    ".sco"
-                ],
-                "configuration": "./language-configuration.json"
-            },
-            {
-                "id": "csound-csd",
-                "aliases": [
-                    "Csound CSD",
-                    "csound-csd"
-                ],
-                "extensions": [
-                    ".csd"
-                ],
+                "icon": {
+                    "light": "./icons/cs-icon-light.png",
+                    "dark": "./icons/cs-icon-dark.png"
+                },
                 "configuration": "./language-configuration.json"
             }
         ],
-        "grammars": [
+        "semanticTokenScopes": [
             {
-                "language": "csound-orc",
-                "scopeName": "source.csound.orc",
-                "path": "./syntaxes/csound-orc.tmLanguage.json"
-            },
-            {
-                "language": "csound-sco",
-                "scopeName": "source.csound.sco",
-                "path": "./syntaxes/csound-sco.tmLanguage.json"
-            },
-            {
-                "language": "csound-csd",
-                "scopeName": "source.csound.csd",
-                "path": "./syntaxes/csound-csd.tmLanguage.json",
-                "embeddedLanguages": {
-                    "meta.embedded.json": "json"
+                "language": "csound",
+                "scopes": {
+                    "decorator": [
+                        "decorator"
+                    ],
+                    "variable": [
+                        "variable"
+                    ],
+                    "function": [
+                        "function"
+                    ],
+                    "type": [
+                        "type"
+                    ],
+                    "keyword": [
+                        "keyword"
+                    ],
+                    "string": [
+                        "string"
+                    ],
+                    "number": [
+                        "number"
+                    ],
+                    "comment": [
+                        "comment.line",
+                        "comment.block"
+                    ],
+                    "operator": [
+                        "operator"
+                    ],
+                    "macro": [
+                        "macro"
+                    ],
+                    "property": [
+                        "property"
+                    ],
+                    "namespace": [
+                        "namespace"
+                    ]
                 }
             }
         ],
+        "semanticTokenTypes": [
+            {
+                "id": "decorator",
+                "description": "Style for decorators"
+            },
+            {
+                "id": "parameter",
+                "description": "Style for parameters"
+            },
+            {
+                "id": "macro",
+                "description": "Style for macros"
+            },
+            {
+                "id": "type",
+                "description": "Style for types"
+            },
+            {
+                "id": "comment",
+                "description": "Style for comments"
+            },
+            {
+                "id": "keyword",
+                "description": "Style for keywords"
+            },
+            {
+                "id": "property",
+                "description": "Style for properties"
+            },
+            {
+                "id": "namespace",
+                "description": "Style for namespaces"
+            },
+            {
+                "id": "variable",
+                "description": "Style for variables"
+            },
+            {
+                "id": "string",
+                "description": "Style for strings"
+            },
+            {
+                "id": "number",
+                "description": "Style for numbers"
+            },
+            {
+                "id": "function",
+                "description": "Style for opcodes"
+            },
+            {
+                "id": "operator",
+                "description": "Style for operators"
+            }
+        ],
         "configurationDefaults": {
-            "[csound-csd]": {
+            "[csound]": {
+                "editor.semanticHighlighting.enabled": true,
+                "editor.formatOnType": true,
                 "editor.suggestOnTriggerCharacters": true
             }
         },
         "keybindings": [
             {
-                "command": "extension.csoundPlayActiveDocument",
+                "command": "csound.runFile",
                 "key": "alt+.",
-                "when": "editorFocus"
+                "when": "editorTextFocus && editorLangId == csound"
             },
             {
-                "command": "extension.csoundKillCsoundProcess",
+                "command": "csound.stopExecution",
                 "key": "alt+escape",
-                "when": "editorFocus"
+                "when": "editorLangId == csound || focusedView == csound.webview"
+            },
+            {
+                "command": "csound.saveAsAudioFile",
+                "key": "alt+s",
+                "when": "editorTextFocus && editorLangId == csound && csound.host == native"
+            },
+            {
+                "command": "csound.openManual",
+                "key": "alt+m",
+                "when": "editorTextFocus && editorLangId == csound"
             },
             {
                 "command": "extension.csoundEvalOrc",
                 "key": "ctrl+enter",
                 "mac": "cmd+enter",
-                "when": "editorTextFocus"
+                "when": "editorTextFocus && editorLangId == csound"
             }
         ],
-        "snippets": [
-            {
-                "language": "csound-csd",
-                "path": "./snippets/csd-snippets.json"
-            }
-        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "csound.saveAsAudioFile",
+                    "when": "csound.host == native || (!isWeb && csound.host != web)"
+                },
+                {
+                    "command": "extension.csoundSelectExecutable",
+                    "when": "csound.host == native || (!isWeb && csound.host != web)"
+                },
+                {
+                    "command": "extension.csoundPlayActiveDocument",
+                    "when": "false"
+                },
+                {
+                    "command": "extension.csoundKillCsoundProcess",
+                    "when": "false"
+                },
+                {
+                    "command": "extension.showOpcodeReference",
+                    "when": "false"
+                }
+            ]
+        },
         "views": {
             "explorer": [
                 {
                     "id": "csound.webview",
                     "name": "Csound WebAudio",
                     "type": "webview",
+                    "icon": "",
                     "contextualTitle": "Csound WebAudio Engine"
                 }
             ]
@@ -194,9 +287,14 @@
         "compile": "webpack",
         "watch": "webpack --watch",
         "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-web": "webpack --config webpack.browser.config.js",
+        "watch-web": "webpack --config webpack.browser.config.js --watch",
+        "package-web": "webpack --config webpack.browser.config.js --mode production --devtool hidden-source-map",
+        "update-web-opcodes": "python3 scripts/build_web_opcodes.py",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p -w . --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "check-web": "tsc -p src/web/tsconfig.json --noEmit",
+        "pretest": "npm run compile-tests && npm run check-web && npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js"
     },
@@ -204,16 +302,18 @@
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.1.1",
         "@types/node": "^14.18.63",
-        "@types/vscode": "^1.75.0",
+        "@types/vscode": "^1.82.0",
         "@types/webpack-env": "^1.18.5",
         "@typescript-eslint/eslint-plugin": "^4.33.0",
         "@typescript-eslint/parser": "^4.33.0",
+        "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^1.6.2",
         "@vscode/test-web": "^0.0.8",
         "assert": "^2.1.0",
+        "copy-webpack-plugin": "^13.0.1",
         "eslint": "^7.32.0",
         "glob": "^7.2.3",
-        "mocha": "^9.2.2",
+        "mocha": "^11.7.5",
         "process": "^0.11.10",
         "ts-loader": "^9.5.1",
         "typescript": "^4.9.5",
@@ -221,7 +321,19 @@
         "webpack-cli": "^4.10.0"
     },
     "dependencies": {
-        "@csound/browser": "^7.0.0-beta11"
+        "@csound/browser": "^7.0.0-beta11",
+        "@tree-sitter-grammars/tree-sitter-toml": "^0.7.0",
+        "install": "^0.13.0",
+        "path-browserify": "^1.0.1",
+        "tree-sitter-bash": "^0.25.1",
+        "tree-sitter-csound": "github:PasqualeMainolfi/tree-sitter-csound",
+        "tree-sitter-html": "^0.23.2",
+        "tree-sitter-json": "^0.24.8",
+        "tree-sitter-python": "^0.25.0",
+        "vscode-languageclient": "^9.0.1",
+        "vscode-languageserver": "^9.0.1",
+        "vscode-languageserver-textdocument": "^1.0.12",
+        "web-tree-sitter": "^0.26.3"
     },
     "repository": {
         "type": "git",

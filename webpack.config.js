@@ -3,7 +3,17 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const webpack = require('webpack');
+const copyPlugin = require('copy-webpack-plugin');
+
+const localCsoundGrammarPath = path.resolve(__dirname, '../csound-tree-sitter');
+const csoundGrammarPath = fs.existsSync(path.join(localCsoundGrammarPath, 'tree-sitter-csound.wasm'))
+	? localCsoundGrammarPath
+	: path.resolve(__dirname, 'node_modules/tree-sitter-csound');
+
+// web extension and LSP worker are type-checked against WebWorker libs, not Node or DOM
+const webTsConfig = path.resolve(__dirname, 'src/web/tsconfig.json');
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -13,26 +23,20 @@ const webExtensionConfig = {
 	mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
 	target: 'webworker', // extensions run in a webworker context
 	entry: {
-		'extension': './src/web/extension.ts',
+        'extension': './src/web/extension.ts',
 		'test/suite/index': './src/web/test/suite/index.ts'
 	},
 	output: {
 		filename: '[name].js',
 		path: path.join(__dirname, './dist/web'),
-		libraryTarget: 'commonjs',
+        libraryTarget: 'commonjs',
 		devtoolModuleFilenameTemplate: '../../[resource-path]'
-	},
+    },
 	resolve: {
 		mainFields: ['browser', 'module', 'main'], // look for `browser` entry point in imported node modules
 		extensions: ['.ts', '.js'], // support ts-files and js-files
 		alias: {
 			// provides alternate implementation for node module and source files
-		},
-		fallback: {
-			// Webpack 5 no longer polyfills Node.js core modules automatically.
-			// see https://webpack.js.org/configuration/resolve/#resolvefallback
-			// for the list of Node.js core module polyfills.
-			'assert': require.resolve('assert')
 		}
 	},
 	module: {
@@ -40,13 +44,25 @@ const webExtensionConfig = {
 			test: /\.ts$/,
 			exclude: /node_modules/,
 			use: [{
-				loader: 'ts-loader'
+				loader: 'ts-loader',
+				options: { configFile: webTsConfig }
 			}]
 		}]
 	},
 	plugins: [
 		new webpack.ProvidePlugin({
 			process: 'process/browser', // provide a shim for the global `process` variable
+		}),
+        new copyPlugin({
+            patterns: [
+                {
+                    from: 'resources/csound-json_data/',
+                    to: './csound-json_data',
+                    context: 'src/web',
+                    noErrorOnMissing: true
+                }
+            ]
+
 		}),
 	],
 	externals: {
@@ -55,9 +71,115 @@ const webExtensionConfig = {
 	performance: {
 		hints: false
 	},
-	devtool: 'nosources-source-map' // create a source map that points to the original source file
+	// devtool: 'nosources-source-map' // create a source map that points to the original source file
+	devtool: 'inline-source-map' // create a source map that points to the original source file
 };
 
+/** @type WebpackConfig */
+const lspServerConfig = {
+	mode: 'none',
+	target: 'webworker',
+	entry: {
+		'server': './src/web/server.ts',
+	},
+	output: {
+		filename: '[name].js',
+		path: path.join(__dirname, './dist/web'),
+        globalObject: 'self',
+    },
+	resolve: {
+		mainFields: ['browser', 'module', 'main'],
+		extensions: ['.ts', '.js'],
+		fallback: {
+	        "fs": false,
+            "module": false,
+            "crypto": false,
+            "path": require.resolve("path-browserify"),
+            "assert": require.resolve("assert"),
+            "process": require.resolve("process/browser"),
+		}
+	},
+	module: {
+		rules: [{
+			test: /\.ts$/,
+			exclude: /node_modules/,
+			use: [{ loader: 'ts-loader', options: { configFile: webTsConfig } }]
+		}]
+	},
+	plugins: [
+    	new webpack.ProvidePlugin({
+            process: 'process/browser.js',
+        }),
+        new copyPlugin({
+            patterns: [
+                {
+                    from: path.resolve(__dirname, 'node_modules/web-tree-sitter/web-tree-sitter.wasm'),
+                    to: './'
+                },
+                {
+                    from: path.join(csoundGrammarPath, 'tree-sitter-csound.wasm'),
+                    to: './',
+                    context: 'src/web'
+                },
+                {
+                    from: path.join(csoundGrammarPath, 'queries'),
+                    to: './queries',
+                    context: 'src/web',
+                    noErrorOnMissing: true
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-python/tree-sitter-python.wasm'),
+                    to: './',
+                    context: 'src/web'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-python/queries'),
+                    to: './python_queries',
+                    context: 'src/web'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-html/tree-sitter-html.wasm'),
+                    to: './'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-html/queries'),
+                    to: './html_queries',
+                    context: 'src/web'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-json/tree-sitter-json.wasm'),
+                    to: './'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-json/queries'),
+                    to: './json_queries',
+                    context: 'src/web'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-bash/tree-sitter-bash.wasm'),
+                    to: './'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/tree-sitter-bash/queries'),
+                    to: './bash_queries',
+                    context: 'src/web'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/@tree-sitter-grammars/tree-sitter-toml/tree-sitter-toml.wasm'),
+                    to: './'
+                },
+                {
+                    from: path.resolve(__dirname, 'node_modules/@tree-sitter-grammars/tree-sitter-toml/queries'),
+                    to: './toml_queries',
+                    context: 'src/web'
+                }
+            ]
+        })
+    ],
+    externals: { },
+	performance: { hints: false },
+	devtool: 'inline-source-map'
+};
 
 /** @type WebpackConfig */
 const extensionConfig = {
@@ -134,6 +256,15 @@ const webviewConfig = {
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
+		new copyPlugin({
+            patterns: [
+                {
+                    from: '*.css',
+                    to: './',
+                    context: 'src/webview' // from src/webview to dist/webview
+                },
+            ],
+        }),
 	],
 	performance: {
 		hints: false
@@ -141,4 +272,4 @@ const webviewConfig = {
 	devtool: 'nosources-source-map'
 };
 
-module.exports = [ webExtensionConfig, extensionConfig, webviewConfig ];
+module.exports = [ webExtensionConfig, extensionConfig, webviewConfig, lspServerConfig ];

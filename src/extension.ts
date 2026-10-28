@@ -1,104 +1,82 @@
-"use strict";
-
 import * as vscode from "vscode";
 import * as commands from "./commands/csoundCommands";
-import { showOpcodeReference } from "./commands/showOpcodeReference";
-import { completionItemProvider, addTokensToDocumentSet, clearTokensForDocumentSet } from "./completionProvider";
+import { registerLegacyAliases } from "./commands/legacyAliases";
+import { getLatestCsoundLSP, registerCsoundStatusBar } from "./utils";
 
-export function activate(context: vscode.ExtensionContext) {
-  console.log("Csound's vscode plugin is now active!");
+import {
+    LanguageClientOptions,
+    LanguageClient,
+    ServerOptions
+} from 'vscode-languageclient/node';
 
-  // Add autocomplete for opcodes
-  context.subscriptions.push(
-    vscode.languages.registerCompletionItemProvider(
-      ["csound-csd", "csound-orc"],
-      completionItemProvider,
-      ""
-    )
-  );
+let client: LanguageClient | undefined;
 
-  // Listen for changes in text documents
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument(event => {
-      const document = event.document;
+export async function activate(context: vscode.ExtensionContext) {
+    console.log("Csound's vscode plugin is now active!");
 
-      event.contentChanges.forEach(change => {
-        const lineNumber = change.range.start.line;
-        const lineText = document.lineAt(lineNumber).text;
-        const changeText = change.text;
+    // Commands do not depend on the language server: register them first so they
+    // keep working when the LSP cannot be found, downloaded or started.
+    context.subscriptions.push(
+        vscode.commands.registerCommand("csound.runFile", commands.runFile),
+        vscode.commands.registerCommand("csound.saveAsAudioFile", commands.saveAsAudioFile),
+        vscode.commands.registerCommand("csound.stopExecution", commands.stopExecution),
+        vscode.commands.registerCommand("csound.openManual", commands.openManual),
+        vscode.commands.registerCommand("extension.csoundSelectExecutable", commands.selectCsoundExecutable),
+        vscode.commands.registerTextEditorCommand("extension.csoundEvalOrc", commands.evalOrc),
+        vscode.commands.registerTextEditorCommand("extension.csoundEvalSco", commands.evalSco),
+    );
+    registerLegacyAliases(context);
 
-        if (/\W/.test(changeText)) {
-          // Add tokens from the current line
-          addTokensToDocumentSet(document, lineText);
-        }
-      });
-    })
-  );
+    // Native-only commands depend on which entry point runs, not on the UI kind:
+    // a browser UI (e.g. Codespaces) can still run this extension in a remote Node host.
+    await vscode.commands.executeCommand("setContext", "csound.host", "native");
 
-  // Listen for when an editor becomes active (e.g., switching between files)
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(editor => {
-      if (editor) {
-        const document = editor.document;
-        addTokensToDocumentSet(document, document.getText()); // Parse the active document and add tokens
-      }
-    })
-  );
+    // status bar
+    registerCsoundStatusBar(context);
 
-  // Handle already open files when the extension is activated
-  if (vscode.window.activeTextEditor) {
-    const document = vscode.window.activeTextEditor.document;
-    addTokensToDocumentSet(document, document.getText()); // Parse the currently active file
-  }
+    let lspPath: string | undefined;
+    try {
+        lspPath = await getLatestCsoundLSP(context);
+    } catch (err) {
+        console.error("Csound LSP setup failed:", err);
+        vscode.window.showWarningMessage(`Csound LSP could not be set up: ${err}`);
+    }
+    // const lspPath = "/Users/pm/AcaHub/Coding/tree-sitter-csound/csound-lsp/target/release/csound-lsp"; // for local test
+    if (!lspPath) { return; }
 
-  // Clean up token sets when a document is closed
-  context.subscriptions.push(
-    vscode.workspace.onDidCloseTextDocument(document => {
-      const uri = document.uri.toString();
-      clearTokensForDocumentSet(uri); // Remove the token set for this document
-    })
-  );
+    const serverOptions: ServerOptions = {
+        command: lspPath,
+        args: [],
+    };
 
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [
+            { scheme: "file", language: "csound" }
+        ],
+        initializationOptions: { isOnWeb: false }
+    };
 
-  const showOpcodeReferenceCommand = vscode.commands.registerCommand(
-    "extension.showOpcodeReference",
-    showOpcodeReference
-  );
-  context.subscriptions.push(showOpcodeReferenceCommand);
+    client = new LanguageClient(
+        "csound-lsp",
+        "Csound Language Server",
+        serverOptions,
+        clientOptions
+    );
 
-  const playCommand = vscode.commands.registerTextEditorCommand(
-    "extension.csoundPlayActiveDocument",
-    commands.playActiveDocument
-  );
-  context.subscriptions.push(playCommand);
+    context.subscriptions.push({
+        dispose: () => client?.stop()
+    });
 
-  const browseForExecutableCommand = vscode.commands.registerTextEditorCommand(
-    "extension.csoundSelectExecutable",
-    commands.selectCsoundExecutable
-  );
-  context.subscriptions.push(browseForExecutableCommand);
-
-  const killCommand = vscode.commands.registerTextEditorCommand(
-    "extension.csoundKillCsoundProcess",
-    commands.killCsoundProcess
-  );
-  context.subscriptions.push(killCommand);
-
-  const evalOrcCommand = vscode.commands.registerTextEditorCommand(
-    "extension.csoundEvalOrc",
-    commands.evalOrc
-  );
-  context.subscriptions.push(evalOrcCommand);
-
-  const evalScoCommand = vscode.commands.registerTextEditorCommand(
-    "extension.csoundEvalSco",
-    commands.evalSco
-  );
-  context.subscriptions.push(evalScoCommand);
-
+    try {
+        await client.start();
+    } catch (err) {
+        vscode.window.showErrorMessage(`Csound Language Server failed to start: ${err}`);
+    }
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-  commands.killCsoundProcess();
+    commands.stopExecution();
+    commands.closeManualServers();
+    return client?.stop();
 }

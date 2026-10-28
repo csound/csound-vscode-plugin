@@ -1,0 +1,7 @@
+allowBuilds:
+  '@tree-sitter-grammars/tree-sitter-toml': set this to true or false
+  tree-sitter-bash: set this to true or false
+  tree-sitter-csound@https://codeload.github.com/PasqualeMainolfi/tree-sitter-csound/tar.gz/09e553dcc7a256c841f3fe50a8b2d8f0515b47c8: set this to true or false
+  tree-sitter-html: set this to true or false
+  tree-sitter-json: set this to true or false
+  tree-sitter-python: set this to true or false
