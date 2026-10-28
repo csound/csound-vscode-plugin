@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@csound/browser':
-        specifier: ^7.0.0-beta11
+        specifier: ^7.0.0
         version: 7.0.0
       '@tree-sitter-grammars/tree-sitter-toml':
         specifier: ^0.7.0
@@ -24,8 +24,8 @@ importers:
         specifier: ^0.25.1
         version: 0.25.1
       tree-sitter-csound:
-        specifier: github:PasqualeMainolfi/tree-sitter-csound
-        version: https://codeload.github.com/PasqualeMainolfi/tree-sitter-csound/tar.gz/09e553dcc7a256c841f3fe50a8b2d8f0515b47c8
+        specifier: ^1.6.3
+        version: 1.6.3
       tree-sitter-html:
         specifier: ^0.23.2
         version: 0.23.2
@@ -2242,9 +2242,8 @@ packages:
       tree-sitter:
         optional: true
 
-  tree-sitter-csound@https://codeload.github.com/PasqualeMainolfi/tree-sitter-csound/tar.gz/09e553dcc7a256c841f3fe50a8b2d8f0515b47c8:
-    resolution: {gitHosted: true, integrity: sha512-xElsTowU9mNolZZyp9RxtDeDKSGRTPMhLRD35CintydTXkSDknh/4wffFqGOwadX99/TYR4OzDK02xxUajgf4A==, tarball: https://codeload.github.com/PasqualeMainolfi/tree-sitter-csound/tar.gz/09e553dcc7a256c841f3fe50a8b2d8f0515b47c8}
-    version: 1.6.3
+  tree-sitter-csound@1.6.3:
+    resolution: {integrity: sha512-AKnuyioEMGlv1XLxHLLo+X0KrwQ2qAQQ4kGZfZDYTIndslKyqsNWXOe6tQSz3lwMjNi6U8ntkmN5VULiq/LXtg==}
     peerDependencies:
       tree-sitter: ^0.22.4
     peerDependenciesMeta:
@@ -4840,7 +4839,7 @@ snapshots:
       node-addon-api: 8.9.2
       node-gyp-build: 4.8.4
 
-  tree-sitter-csound@https://codeload.github.com/PasqualeMainolfi/tree-sitter-csound/tar.gz/09e553dcc7a256c841f3fe50a8b2d8f0515b47c8:
+  tree-sitter-csound@1.6.3:
     dependencies:
       node-addon-api: 8.9.2
       node-gyp-build: 4.8.4

@@ -2,7 +2,7 @@
 
 import * as vscode from "vscode";
 import * as dgram from "dgram";
-import { flash, getEvalText, getScoEvalText } from "../utils";
+import { flash, getEvalText, getScoEvalText } from "../liveCoding";
 import { showOpcodeReference } from "./showOpcodeReference";
 import path from "path";
 import * as fs from "fs";

@@ -2,7 +2,7 @@
     "name": "csound-vscode-plugin",
     "displayName": "Csound",
     "description": "Csound language plugin for Visual Studio Code",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "publisher": "kunstmusik",
     "engines": {
         "vscode": "^1.82.0"
@@ -21,11 +21,13 @@
         "commands": [
             {
                 "command": "csound.runFile",
-                "title": "Csound: Run Active Document"
+                "title": "Csound: Run Active Document",
+                "icon": "$(play)"
             },
             {
                 "command": "csound.stopExecution",
-                "title": "Csound: Stop Running Csound"
+                "title": "Csound: Stop Running Csound",
+                "icon": "$(debug-stop)"
             },
             {
                 "command": "csound.saveAsAudioFile",
@@ -58,6 +60,21 @@
             {
                 "command": "extension.showOpcodeReference",
                 "title": "Csound: Show Csound help (legacy)"
+            },
+            {
+                "command": "csound.pauseResume",
+                "title": "Csound: Pause or Resume",
+                "icon": "$(debug-pause)"
+            },
+            {
+                "command": "csound.showOutput",
+                "title": "Csound: Show Output",
+                "icon": "$(output)"
+            },
+            {
+                "command": "csound.showPlayer",
+                "title": "Csound: Show Player",
+                "icon": "$(unmute)"
             }
         ],
         "configuration": {
@@ -89,6 +106,12 @@
                     "type": "number",
                     "default": 10000,
                     "description": "Port to send live coding evaluations over UDP."
+                },
+                "csound.web.projectRoot": {
+                    "type": "string",
+                    "default": ".",
+                    "scope": "resource",
+                    "description": "Project directory relative to the owning workspace folder to synchronize for browser playback."
                 }
             }
         },
@@ -227,7 +250,7 @@
             {
                 "command": "csound.stopExecution",
                 "key": "alt+escape",
-                "when": "editorLangId == csound || focusedView == csound.webview"
+                "when": "editorLangId == csound || focusedView == csound.webview || csound.canStop"
             },
             {
                 "command": "csound.saveAsAudioFile",
@@ -267,17 +290,83 @@
                 {
                     "command": "extension.showOpcodeReference",
                     "when": "false"
+                },
+                {
+                    "command": "csound.pauseResume",
+                    "when": "csound.host == web"
+                },
+                {
+                    "command": "csound.showOutput",
+                    "when": "csound.host == web"
+                },
+                {
+                    "command": "csound.showPlayer",
+                    "when": "csound.host == web"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "csound.runFile",
+                    "when": "csound.host == web && resourceLangId == csound",
+                    "group": "navigation@0"
+                },
+                {
+                    "command": "csound.pauseResume",
+                    "when": "csound.host == web && resourceLangId == csound && (csound.isPlaying || csound.isPaused)",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "csound.stopExecution",
+                    "when": "csound.host == web && resourceLangId == csound && csound.canStop",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "csound.showOutput",
+                    "when": "csound.host == web && resourceLangId == csound",
+                    "group": "navigation@3"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "csound.runFile",
+                    "when": "view == csound.webview && csound.host == web",
+                    "group": "navigation@0"
+                },
+                {
+                    "command": "csound.pauseResume",
+                    "when": "view == csound.webview && csound.host == web && (csound.isPlaying || csound.isPaused)",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "csound.stopExecution",
+                    "when": "view == csound.webview && csound.host == web && csound.canStop",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "csound.showOutput",
+                    "when": "view == csound.webview && csound.host == web",
+                    "group": "navigation@3"
                 }
             ]
         },
         "views": {
-            "explorer": [
+            "csound": [
                 {
                     "id": "csound.webview",
-                    "name": "Csound WebAudio",
+                    "name": "Csound",
                     "type": "webview",
-                    "icon": "",
-                    "contextualTitle": "Csound WebAudio Engine"
+                    "icon": "icons/cs-icon-dark.png",
+                    "when": "csound.host == web",
+                    "contextualTitle": "Csound"
+                }
+            ]
+        },
+        "viewsContainers": {
+            "panel": [
+                {
+                    "id": "csound",
+                    "title": "Csound",
+                    "icon": "icons/cs-icon-dark.png"
                 }
             ]
         }
@@ -294,9 +383,10 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p -w . --outDir out",
         "check-web": "tsc -p src/web/tsconfig.json --noEmit",
-        "pretest": "npm run compile-tests && npm run check-web && npm run compile && npm run lint",
+        "pretest": "npm run test-web-playback && npm run compile-tests && npm run check-web && npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
-        "test": "node ./out/test/runTest.js"
+        "test": "node ./out/test/runTest.js",
+        "test-web-playback": "node scripts/test-web-playback.cjs"
     },
     "devDependencies": {
         "@types/glob": "^7.2.0",
@@ -321,7 +411,7 @@
         "webpack-cli": "^4.10.0"
     },
     "dependencies": {
-        "@csound/browser": "^7.0.0-beta11",
+        "@csound/browser": "^7.0.0",
         "@tree-sitter-grammars/tree-sitter-toml": "^0.7.0",
         "install": "^0.13.0",
         "path-browserify": "^1.0.1",

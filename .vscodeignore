@@ -13,3 +13,4 @@ vsc-extension-quickstart.md
 **/*.ts
 scripts/**
 lsp-bin/**
+.vscode-test-web/**
