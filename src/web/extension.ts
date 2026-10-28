@@ -258,7 +258,7 @@ export async function activate(context: vscode.ExtensionContext) {
             const fileByte = await vscode.workspace.fs.readFile(result);
             const baseName = result.toString().replace(/[\//]+$/, "").split(/[\//]/).pop() ?? result.toString();
             const content = new TextDecoder().decode(fileByte);
-            const hashInit = await crypto.subtle.digest("SHA-256", fileByte);
+            const hashInit = await crypto.subtle.digest("SHA-256", new Uint8Array(fileByte));
             const hashString = [...new Uint8Array(hashInit)]
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join("");

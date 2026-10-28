@@ -276,12 +276,18 @@ function getLatestReleaseTag(): Promise<string> {
 
         const req = https.request(options, (res) => {
             if (res.statusCode !== 200) {
+                res.resume();
                 reject(new Error(`GitHub API Error: ${res.statusCode}`));
                 return;
             }
 
             let data = '';
             res.on('data', (chunk) => data += chunk);
+            // a connection dropped mid-response never emits 'end'
+            res.on('error', reject);
+            res.on('close', () => {
+                if (!res.complete) { reject(new Error("GitHub API response was interrupted")); }
+            });
             res.on('end', () => {
                 try {
                     const release = JSON.parse(data);

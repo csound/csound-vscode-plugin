@@ -250,11 +250,11 @@
             "commandPalette": [
                 {
                     "command": "csound.saveAsAudioFile",
-                    "when": "csound.nativeHost"
+                    "when": "csound.nativeHost || !isWeb"
                 },
                 {
                     "command": "extension.csoundSelectExecutable",
-                    "when": "csound.nativeHost"
+                    "when": "csound.nativeHost || !isWeb"
                 },
                 {
                     "command": "extension.csoundPlayActiveDocument",
