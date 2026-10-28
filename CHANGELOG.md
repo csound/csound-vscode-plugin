@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Next
 
+## 0.8.0
+
+* Add desktop and web language support built on the Csound Language Server and Tree-sitter grammar, including syntax-tree highlighting, diagnostics, completion, hover, formatting and CodeLens.
+* Highlight Python, HTML, Cabbage JSON and CsTest TOML embedded in CSD files.
+* Download and update the language server automatically; an installed version continues to work offline.
+* Show the bundled Csound manual offline on desktop and open the online manual on web.
+* Use one command ID per action across desktop and web (`csound.runFile`, `csound.stopExecution`, `csound.openManual`, `csound.saveAsAudioFile`); keep the previous IDs as aliases.
+* Add `Csound: Save As Audio File` (`alt+s`) on desktop.
+* Require VS Code 1.82 or later; remove `csound.htmlFilePath` because the manual is bundled with the language server.
+
 ## 0.7.0
 
 * Initial implementation of in-browser rendering with WebAudio Csound when installed as a web extension

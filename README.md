@@ -77,16 +77,15 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 
 ## Release Notes
 
-### Unreleased
+### 0.8.0
 
-* New language support built on the [Csound Language Server](https://github.com/PasqualeMainolfi/csound-lsp) and the [Csound Tree-sitter grammar](https://github.com/PasqualeMainolfi/tree-sitter-csound): syntax-tree based highlighting, diagnostics, completion, hover, formatting and CodeLens, on desktop and web.
-* Offline Csound manual inside VS Code on desktop.
-* Highlighting of Python, HTML, Cabbage JSON and CsTest TOML embedded in CSD files.
-* The language server is downloaded and updated automatically; an installed version keeps working offline.
-* One command per action on desktop and web; new command IDs (`csound.runFile`, `csound.stopExecution`, `csound.openManual`, `csound.saveAsAudioFile`), with the previous IDs kept as aliases.
-* New `Csound: Save As Audio File` command (`alt+s`).
-* Requires VS Code 1.82 or later.
-* Removed the `csound.htmlFilePath` setting: the manual is now bundled with the language server.
+* Add desktop and web language support built on the Csound Language Server and Tree-sitter grammar, including syntax-tree highlighting, diagnostics, completion, hover, formatting and CodeLens.
+* Highlight Python, HTML, Cabbage JSON and CsTest TOML embedded in CSD files.
+* Download and update the language server automatically; an installed version continues to work offline.
+* Show the bundled Csound manual offline on desktop and open the online manual on web.
+* Use one command ID per action across desktop and web (`csound.runFile`, `csound.stopExecution`, `csound.openManual`, `csound.saveAsAudioFile`); keep the previous IDs as aliases.
+* Add `Csound: Save As Audio File` (`alt+s`) on desktop.
+* Require VS Code 1.82 or later; remove `csound.htmlFilePath` because the manual is bundled with the language server.
 
 ### 0.7.0
 
