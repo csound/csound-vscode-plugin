@@ -6,3 +6,4 @@ node_modules
 *.vsix
 img_features/
 lsp-bin/
+.vscode-test-web/

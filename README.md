@@ -19,10 +19,9 @@ csound-vscode-plugin currently provides:
 
 * Open the Csound manual by choosing `Csound: Open Csound Manual` from the command palette or using the `alt+m` shortcut. On desktop the HTML manual bundled with the language server is shown inside VS Code and works offline; on the web the online manual is opened.
 
-* Play the file in the currently-active editor window by choosing `Csound: Run Active Document`
- from the command palette or using the `alt+.` shortcut. A `.orc` or `.sco` file is played together with the file with the same name and the opposite extension. To stop a playing Csound, choose
- `Csound: Stop Running Csound` from the command palette or use the `alt+escape` shortcut
- while the focus is still in a Csound text editor window (or, on the web, in the Csound WebAudio panel).
+* Play the active document with `Csound: Run Active Document` or `alt+.`. Desktop playback supports CSD files and matching `.orc`/`.sco` pairs; browser playback starts a `.csd`. Stop with `Csound: Stop Running Csound` or `alt+escape` while a Csound editor has focus, or whenever browser playback is active or pending.
+
+* A compact browser player in the bottom Panel, with Run, Pause/Resume, Stop, and Show Output toolbar actions, plus editor toolbar actions and a playback status-bar item. The engine stays alive when the player is hidden or collapsed, and later Runs preserve editor focus.
 
 * Render the active document to `<name>.wav`, next to the file, with `Csound: Save As Audio File` or `alt+s` (desktop only)
 
@@ -40,6 +39,9 @@ csound-vscode-plugin currently provides:
 | ------- | -------- | ------------ |
 | `Csound: Run Active Document` | `alt+.` | desktop, web |
 | `Csound: Stop Running Csound` | `alt+escape` | desktop, web |
+| `Csound: Pause or Resume` | | web |
+| `Csound: Show Player` | | web |
+| `Csound: Show Output` | | web |
 | `Csound: Save As Audio File` | `alt+s` | desktop |
 | `Csound: Open Csound Manual` | `alt+m` | desktop, web |
 | `Csound: Evaluate Orchestra Code` | `ctrl+enter` / `cmd+enter` | desktop, web |
@@ -55,11 +57,23 @@ Keybindings bound to the previous command IDs (`extension.csoundPlayActiveDocume
 * Desktop: you must have Csound properly configured on your system so you can use it on the command line, or set its path with `csound.executable`.
   On first start the plugin offers to download the Csound Language Server for your platform (Windows x86_64, Linux x86_64, macOS x86_64 and arm64) from its [GitHub releases](https://github.com/PasqualeMainolfi/csound-lsp/releases), and it offers updates when a new release is out. Without a network connection the installed version is used. Commands keep working without the language server.
 
-* Web: nothing to install. Csound runs in the browser in the `Csound WebAudio` panel of the Explorer, and the language features run in a bundled web version of the language server.
+* Web: nothing to install. Csound runs in the browser in the retained `Csound` player in the bottom Panel, and the language features run in a bundled web version of the language server.
+
+## Browser Playback
+
+Run a `.csd` with `alt+.` or the editor's Run action. If the browser requires audio activation, click **Enable Audio & Play** in the Csound player; the pending document then plays automatically. Suspended audio resumes automatically when browser policy permits, with another activation click requested only when needed. Later Runs preserve editor focus. The player can be collapsed or hidden while audio runs. Its toolbar provides Pause/Resume, Stop, and Show Output; `alt+escape` stops an active or pending performance even outside a Csound editor.
+
+The browser engine and its project files stay alive between Runs. The initial Run mirrors regular files in the document's workspace folder, including binary samples; later Runs send only changed content. `.git` and `node_modules` are excluded. Open dirty source documents use editor contents. Files changed during playback are applied on the next Run; Evaluate Orchestra/Score sends code to the current performance, with the same block selection and visual feedback as desktop.
+
+Use `csound.web.projectRoot` (default `.`), relative to the owning workspace folder, to limit synchronization to a smaller project. The CSD and its includes/samples must be within that root. Relative paths resolve from the CSD directory. One project is mirrored at a time; generated runtime files are retained between Runs within that project and are never written back automatically. Removing the player or reloading the window ends the runtime; Run again to reconnect. A restarted runtime receives a fresh copy of the project, including unchanged includes and samples. Simply hiding or collapsing the player keeps the current runtime alive.
+
+Browser Run starts CSD documents. Use Evaluate Orchestra/Score for standalone `.orc`/`.sco` code after starting a CSD. Initial asset synchronization still consumes memory; it is not a direct mount or a zero-copy filesystem. The Output channel reports synchronization file counts, total project size, transferred bytes, and duration. Successful Runs do not automatically reveal Output; choose **Show Output** to inspect it. Providers without file timestamps require content comparisons on subsequent Runs.
 
 ## Live Coding
 
-Live coding with csound-vscode-plugin requires Csound to use UDP server mode listening to the port given in settings (by default, port 10000). Csound itself must be configured to listen to the matching port that the plugin will use. This can be done per-project by adding `--port=10000` to the CsOptions of the project's CSD, or done for every project by adding the above flag to the `csound.playArgs` settings. (Caution: Unless all of your Csound work is live coding, adding the --port flag may cause your project to run indefinitely if the project was not designed for live coding.)
+On desktop, live coding requires Csound to use UDP server mode listening to the port given in settings (by default, port 10000). Csound itself must be configured to listen to the matching port that the plugin will use. This can be done per-project by adding `--port=10000` to the CsOptions of the project's CSD, or done for every project by adding the above flag to the `csound.playArgs` settings. (Caution: Unless all of your Csound work is live coding, adding the --port flag may cause your project to run indefinitely if the project was not designed for live coding.)
+
+In the browser, start a CSD and evaluate `.orc` or `.sco` code directly in the running engine; no UDP server is needed. An explicit selection is evaluated as written. With no selection, orchestra evaluation finds the surrounding `instr ... endin` or `opcode ... endop` block, falling back to the current line; score evaluation uses the current line. Code sent for evaluation is briefly highlighted on both desktop and web.
 
 ## Extension Settings
 
@@ -68,14 +82,31 @@ Live coding with csound-vscode-plugin requires Csound to use UDP server mode lis
 | `csound.executable`         | `"csound"`    | The Csound executable. The default value of `csound` will run the system wide Csound. If you wish to use another Csound executable you can do so by passing an updated path, or browsing for a Csound executable from the Command palette. |
 | `csound.playArgs`           | `[ "-odac" ]` | Arguments to give to Csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash. |
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing or rendering the current file. Choosing "Always silently save before playing" in the prompt sets it. |
-| `csound.UDPAddress`         | `127.0.0.1`   | Address to send live coding evaluations over UDP. |
-| `csound.UDPPort`            | `10000`       | Port to send live coding evaluations over UDP. |
+| `csound.UDPAddress`         | `127.0.0.1`   | Address to send desktop live coding evaluations over UDP. |
+| `csound.UDPPort`            | `10000`       | Port to send desktop live coding evaluations over UDP. |
+| `csound.web.projectRoot` | `"."` | Browser project directory relative to the owning workspace folder. The CSD, includes, and samples must be inside this directory. |
 
 ## Known Issues
 
 * Rendering to an audio file and selecting the Csound executable are not available in the web extension.
 
+## Development Checks
+
+Run `npm run test-web-playback` for playback ordering, cancellation, project synchronization, and shared live-coding checks. These checks also run as part of `npm test` preparation.
+
+For a browser runtime smoke test, run `npm run package-web`, serve the repository with `python3 -m http.server 8000 --bind 127.0.0.1`, and open the [runtime smoke test](http://127.0.0.1:8000/scripts/test-web-runtime.html). Click **Enable Audio & Play** if prompted. The silent test exercises parent includes, WAV samples, switching documents during playback, paused Stop, reuse after reset, and runtime cleanup. This harness checks the browser runtime; view lifetime, native toolbars, and focus behavior also need testing inside VS Code.
+
 ## Release Notes
+
+### 0.9.0
+
+* Replace the browser engine controls with a compact, retained Csound player in the bottom Panel, plus editor and player toolbar actions and a playback status-bar item.
+* Add browser Pause/Resume and Show Output commands. Keep editor focus on later Runs and allow Stop to cancel an active or pending performance from outside a Csound editor.
+* Reuse the browser engine and synchronize changed project files between Runs, including binary samples and unsaved source buffers. Add `csound.web.projectRoot` to scope synchronization to a project directory.
+* Preserve relative include and sample paths, handle file additions and deletions, and resynchronize the project when the audio runtime restarts. Resume suspended audio automatically when browser policy permits.
+* Order browser playback operations, make the latest pending Run replace earlier requests, and use the same Stop operation for toolbar and keyboard actions, including while paused.
+* Share live-coding block selection and visual feedback between desktop and web. Browser playback commands remain available if language-server initialization fails.
+* Update WebAudio Csound (`@csound/browser`) to 7.0.0 and add playback, synchronization, and document-switching regression checks.
 
 ### 0.8.0
 

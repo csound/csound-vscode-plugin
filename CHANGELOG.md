@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Next
 
+## 0.9.0
+
+* Replace the browser engine controls with a compact, retained Csound player in the bottom Panel, plus editor and player toolbar actions and a playback status-bar item.
+* Add browser Pause/Resume and Show Output commands. Keep editor focus on later Runs and allow Stop to cancel an active or pending performance from outside a Csound editor.
+* Reuse the browser engine and synchronize changed project files between Runs, including binary samples and unsaved source buffers. Add `csound.web.projectRoot` to scope synchronization to a project directory.
+* Preserve relative include and sample paths, handle file additions and deletions, and resynchronize the project when the audio runtime restarts. Resume suspended audio automatically when browser policy permits.
+* Order browser playback operations, make the latest pending Run replace earlier requests, and use the same Stop operation for toolbar and keyboard actions, including while paused.
+* Share live-coding block selection and visual feedback between desktop and web. Browser playback commands remain available if language-server initialization fails.
+* Update WebAudio Csound (`@csound/browser`) to 7.0.0 and add playback, synchronization, and document-switching regression checks.
+
 ## 0.8.0
 
 * Add desktop and web language support built on the Csound Language Server and Tree-sitter grammar, including syntax-tree highlighting, diagnostics, completion, hover, formatting and CodeLens.

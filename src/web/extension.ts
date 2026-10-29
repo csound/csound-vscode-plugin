@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import { getEvalText, getScoEvalText, flash } from "../liveCoding";
 import { CsoundWebViewProvider } from "../webview/csoundWebViewProvider";
 import { LanguageClient, LanguageClientOptions } from 'vscode-languageclient/browser';
 import { ResolveIncludedUdoRequest } from "./utils";
@@ -56,6 +57,25 @@ export async function activate(context: vscode.ExtensionContext) {
     // A web extension host can run inside the desktop UI; suppress native-only commands.
     await vscode.commands.executeCommand("setContext", "csound.host", "web");
 
+    const player = new CsoundWebViewProvider(context.extensionUri);
+    context.subscriptions.push(player,
+        vscode.window.registerWebviewViewProvider(CsoundWebViewProvider.viewType, player, {webviewOptions: {retainContextWhenHidden: true}}),
+        vscode.commands.registerCommand('csound.runFile', () => player.run()),
+        vscode.commands.registerCommand('csound.stopExecution', () => player.stopCsound()),
+        vscode.commands.registerCommand('csound.pauseResume', () => player.pauseResume()),
+        vscode.commands.registerCommand('csound.showOutput', () => player.showOutput()),
+        vscode.commands.registerCommand('csound.showPlayer', () => player.show()),
+        vscode.commands.registerCommand('csound.openManual', () => showOpcodeReference())
+    );
+    registerLegacyAliases(context);
+    for (const [command, score] of [['extension.csoundEvalOrc', false], ['extension.csoundEvalSco', true]] as const) {
+        context.subscriptions.push(vscode.commands.registerTextEditorCommand(command, async editor => {
+            const {text, from, to} = (score ? getScoEvalText : getEvalText)(editor.document, editor.selection);
+            if (text.trim() && await player.evaluate(text, score)) { flash(editor, new vscode.Range(from, to)); }
+        }));
+    }
+
+    try {
     const webBaseUri = vscode.Uri.joinPath(context.extensionUri, 'dist/web');
     const serverMain = vscode.Uri.joinPath(webBaseUri, 'server.js');
     const coreWasmUri = vscode.Uri.joinPath(webBaseUri, 'web-tree-sitter.wasm');
@@ -152,108 +172,11 @@ export async function activate(context: vscode.ExtensionContext) {
         worker
     );
 
-    client.start();
+    await client.start();
 
     context.subscriptions.push({
         dispose: () => client.stop()
     });
-
-    // Create and register the WebView provider
-    const csoundWebViewProvider = new CsoundWebViewProvider(context.extensionUri);
-
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(
-        CsoundWebViewProvider.viewType,
-        csoundWebViewProvider
-        )
-    );
-
-    // Helper function to get file content
-    const getActiveDocumentContent = (textEditor: vscode.TextEditor): string | null => {
-        const document = textEditor.document;
-
-        // maybe use the extension rather than languageId?
-        if (document.languageId === "csound") {
-            return document.getText();
-        }
-        return null;
-    };
-
-    // Helper function to get selected text or relevant text for evaluation
-    const getEvalText = (textEditor: vscode.TextEditor): string => {
-        const document = textEditor.document;
-        const selection = textEditor.selection;
-
-        if (!selection.isEmpty) {
-        return document.getText(selection);
-        }
-
-        // If no selection, get the current line
-        const line = document.lineAt(selection.active.line);
-        return line.text;
-    };
-
-    // same public command IDs as the desktop entry point (src/extension.ts)
-    const openManualCommand = vscode.commands.registerCommand(
-        "csound.openManual", async () => {
-            await showOpcodeReference();
-        }
-    );
-    context.subscriptions.push(openManualCommand);
-
-    // play command - now uses WebView
-    const playCommand = vscode.commands.registerTextEditorCommand(
-        "csound.runFile", async (textEditor: vscode.TextEditor) => {
-            const content = getActiveDocumentContent(textEditor);
-            if (content) {
-                // Use relative path from workspace instead of just filename
-                const relativePath = vscode.workspace.asRelativePath(textEditor.document.uri);
-                await csoundWebViewProvider.playCsd(content, relativePath);
-
-                // Show the WebView panel
-                vscode.commands.executeCommand('csound.webview.focus');
-            } else {
-                vscode.window.showErrorMessage(
-                    "Please open a .csd, .orc, or .sco file to play with Csound."
-                );
-            }
-        }
-    );
-    context.subscriptions.push(playCommand);
-
-    // not an editor command: stopping must also work while the audio panel has focus
-    const stopCommand = vscode.commands.registerCommand(
-        "csound.stopExecution", () => {
-            csoundWebViewProvider.stopCsound();
-        }
-    );
-    context.subscriptions.push(stopCommand);
-
-    registerLegacyAliases(context);
-
-    const evalOrcCommand = vscode.commands.registerTextEditorCommand(
-        "extension.csoundEvalOrc", (textEditor: vscode.TextEditor) => {
-            const content = getEvalText(textEditor);
-            if (content.trim()) {
-                csoundWebViewProvider.evalOrc(content);
-            } else {
-                vscode.window.showWarningMessage("No orchestra code selected or found.");
-            }
-        }
-    );
-    context.subscriptions.push(evalOrcCommand);
-
-    const evalScoCommand = vscode.commands.registerTextEditorCommand(
-        "extension.csoundEvalSco", (textEditor: vscode.TextEditor) => {
-            const content = getEvalText(textEditor);
-            if (content.trim()) {
-                csoundWebViewProvider.evalSco(content);
-            } else {
-                vscode.window.showWarningMessage("No score code selected or found.");
-            }
-        }
-    );
-    context.subscriptions.push(evalScoCommand);
 
     client.onRequest("csound-lsp/resolveIncludedUdo", async (params: ResolveIncludedUdoRequest) => {
         const result = resolveInclude(params.documentPath, params.udoPath);
@@ -275,6 +198,10 @@ export async function activate(context: vscode.ExtensionContext) {
             console.error(`Something went wrong while reading .udo file: ${err}`);
         }
     });
+
+    } catch (error) {
+        void vscode.window.showWarningMessage(`Csound language support could not start: ${String(error)}. Playback commands remain available.`);
+    }
 
 }
 
