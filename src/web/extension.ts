@@ -45,12 +45,6 @@ async function getOpcodeInfoData(uri: vscode.Uri): Promise<Record<string, string
     return text ? JSON.parse(text) : {};
 }
 
-// csound_opcodes.json is copied from csound-lsp by scripts/build_web_opcodes.py
-async function getCsoundOpcodeList(uri: vscode.Uri): Promise<object | undefined> {
-    const text = await readTextFile(uri);
-    return text ? JSON.parse(text) : undefined;
-}
-
 async function parseJsonData(path: vscode.Uri) {
     const text = await readTextFile(path);
     const data = JSON.parse(text);
@@ -120,8 +114,7 @@ export async function activate(context: vscode.ExtensionContext) {
         bashData,
         bashHighlights,
         tomlData,
-        tomlHighlights,
-        csoundOpcodes
+        tomlHighlights
     ] = await Promise.all([
         getWasmBase64(coreWasmUri),
         getWasmBase64(csoundWasmUri),
@@ -142,7 +135,6 @@ export async function activate(context: vscode.ExtensionContext) {
         readTextFile(vscode.Uri.joinPath(bashQueriesBaseUri, 'highlights.scm')),
         getWasmBase64(tomlWasmUri),
         readTextFile(vscode.Uri.joinPath(tomlQueriesBaseUri, 'highlights.scm')),
-        getCsoundOpcodeList(vscode.Uri.joinPath(jsonQueriesBaseUri, 'csound_opcodes.json')),
     ]);
 
     const clientOptions: LanguageClientOptions = {
@@ -160,7 +152,6 @@ export async function activate(context: vscode.ExtensionContext) {
             flagCompletions: flagCompletions,
             macroCompletions: macroCompletions,
             opcodeInfos: opcodeQueries,
-            csoundOpcodes: csoundOpcodes,
             htmlWasmUri: htmlData,
             htmlHighlights: htmlHighlights,
             jsonWasmUri: jsonData,

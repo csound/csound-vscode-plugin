@@ -3,6 +3,7 @@ import { TextDocument, TextEdit } from 'vscode-languageserver-textdocument';
 import { Parser, Language, Query, Point, Node } from 'web-tree-sitter';
 import { updateTree, DocState, GError, GenericError, isValidType, iterateTree, parseUdoFile } from './parser';
 import { complete } from './completion';
+import { listBrowserCsoundOpcodes } from './csoundOpcodes';
 import {
     SEMANTIC_TOKEN_TYPE,
     getSemanticTokens,
@@ -162,8 +163,6 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
 
         opcodeFromManual = options.opcodeInfos;
         jsonOpcodes = options.opcodeCompletions;
-        // the web server can't ask Csound: every opcode of a plain install comes from this list
-        addListedOpcodes(jsonOpcodes, options.csoundOpcodes);
         jsonFlags = options.flagCompletions;
         jsonMacros = options.macroCompletions;
 
@@ -242,6 +241,20 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
             documentFormattingProvider: true
         }
     };
+});
+
+connection.onInitialized(() => {
+    // Opcodes without a manual page (printfi, eventi, ...) must not look unknown. The web server
+    // can't run csound, so the Csound that plays in the browser lists what it can run.
+    listBrowserCsoundOpcodes()
+        .then(({ source, opcodes }) => {
+            const added = addListedOpcodes(jsonOpcodes, opcodes, source);
+            connection.console.log(`Opcodes listed by ${source}: ${opcodes.size}, ${added} without a manual page`);
+            for (const uri of docs.keys()) {
+                validateDocument(uri);
+            }
+        })
+        .catch(error => connection.console.warn(`Opcodes of the browser Csound unavailable: ${error}`));
 });
 
 documents.onDidClose(params => {

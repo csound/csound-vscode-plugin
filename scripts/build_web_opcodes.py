@@ -4,9 +4,7 @@
 The web extension cannot download the manual at runtime like the desktop server,
 so this script refreshes `src/web/resources/csound-json_data/`:
 - copies the manual JSON data (csound.json, flags.json, macros.json, manual_indexes.json);
-- packs every opcode markdown page into opcodes.json ({opcode name: markdown});
-- copies csound_opcodes.json from csound-lsp: every opcode of a plain Csound install, so that
-  opcodes without a manual page (printfi, eventi, ...) are not reported as unknown.
+- packs every opcode markdown page into opcodes.json ({opcode name: markdown}).
 Pages are processed like `load_opcodes` in the Rust server (csound-lsp/src/assets.rs),
 so web and desktop hovers show the same text.
 
@@ -28,8 +26,6 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE = PLUGIN_ROOT.parent / "csound_data" / "csound_manual"
 DEFAULT_OUTPUT = PLUGIN_ROOT / "src" / "web" / "resources" / "csound-json_data"
 DATA_FILES = ("csound.json", "flags.json", "macros.json", "manual_indexes.json")
-# written by csound-lsp/scripts/list_csound_opcodes.py
-DEFAULT_OPCODE_LIST = PLUGIN_ROOT.parent / "csound-lsp" / "resources" / "csound_opcodes.json"
 
 # same patterns as csound-lsp/src/assets.rs
 INCLUDE_EXAMPLE = re.compile(r'--8<--\s+"([^"]+)"')
@@ -85,8 +81,6 @@ def main() -> None:
                         help=f"csound_manual checkout or extracted release (default: {DEFAULT_SOURCE})")
     parser.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT,
                         help=f"output folder (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("--opcode-list", type=Path, default=DEFAULT_OPCODE_LIST,
-                        help=f"csound_opcodes.json of csound-lsp (default: {DEFAULT_OPCODE_LIST})")
     args = parser.parse_args()
 
     opcodes, examples, data_dir = find_source_dirs(args.source.resolve())
@@ -100,13 +94,6 @@ def main() -> None:
         json.loads(src.read_text(encoding="utf-8"))  # refuse to ship broken JSON
         shutil.copyfile(src, args.output / name)
         print(f"{src} -> {args.output / name}")
-
-    if args.opcode_list.is_file():
-        json.loads(args.opcode_list.read_text(encoding="utf-8"))  # refuse to ship broken JSON
-        shutil.copyfile(args.opcode_list, args.output / "csound_opcodes.json")
-        print(f"{args.opcode_list} -> {args.output / 'csound_opcodes.json'}")
-    else:
-        print(f"warning: missing opcode list {args.opcode_list}, csound_opcodes.json not updated", file=sys.stderr)
 
     missing: list[str] = []
     data = load_opcodes(opcodes, examples, missing)

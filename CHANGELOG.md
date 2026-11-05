@@ -7,7 +7,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## Next
 
 * Pass `csound.executable` and `csound.playArgs` to the language server, which runs that Csound with the `--opcode-lib`/`--opcode-dir` flags to learn the opcodes and user-defined types of the plugins it loads.
-* Web: recognise the opcodes of a plain Csound install that have no manual page (e.g. `printfi`, `turnoff2i`), from the opcode list shipped by csound-lsp (`csound_opcodes.json`), and show their signatures in completion.
+* Web: recognise the opcodes that have no manual page (e.g. `printfi`) by asking the browser Csound (`@csound/browser`) which opcodes it can run, and show their signatures in completion. The engine is loaded in a separate chunk after the language server has started.
 
 ## 0.9.0
 
