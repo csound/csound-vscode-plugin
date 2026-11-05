@@ -283,3 +283,41 @@ export function getNameAndTypeFromLegacyVar(variable: string): { varName: string
     if (!vMatch) { return { varName: variable, varType: "" }; }
     return { varName: vMatch[2], varType: vMatch[1] + (vMatch[3] ?? "") };
 }
+
+// csound_opcodes.json, written by csound-lsp/scripts/list_csound_opcodes.py:
+// every opcode of a plain Csound install with its (outputs, inputs) signatures.
+export interface CsoundOpcodeList {
+    // key of the JSON file
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    generated_with?: string,
+    opcodes?: Record<string, [string, string][]>
+}
+
+const MAX_LISTED_SIGNATURES = 8;
+
+function listedOpcodeDescription(source: string, signatures: [string, string][]): string {
+    let description = `Opcode listed by ${source} (outputs, inputs):`;
+    for (const [outputs, inputs] of signatures.slice(0, MAX_LISTED_SIGNATURES)) {
+        description += `\n${outputs} ${inputs}`;
+    }
+    if (signatures.length > MAX_LISTED_SIGNATURES) {
+        description += `\n... and ${signatures.length - MAX_LISTED_SIGNATURES} more`;
+    }
+    return description;
+}
+
+// Mirrors the fallback of csound-lsp (add_listed_opcodes_to_cs_references): opcodes without a
+// manual page (printfi, eventi, ...) become known, while manual entries keep their documentation.
+export function addListedOpcodes(opcodes: Map<string, any>, list: CsoundOpcodeList | undefined): number {
+    if (!list?.opcodes) { return 0; }
+    const version = /version\s+(\S+)/.exec(list.generated_with ?? "")?.[1];
+    const source = version ? `Csound ${version}` : "Csound";
+    let added = 0;
+    for (const [name, signatures] of Object.entries(list.opcodes)) {
+        // one-letter names are type casts (B, b), not opcodes to suggest
+        if (name.length < 2 || opcodes.has(name)) { continue; }
+        opcodes.set(name, { prefix: name, body: name, description: listedOpcodeDescription(source, signatures) });
+        added++;
+    }
+    return added;
+}

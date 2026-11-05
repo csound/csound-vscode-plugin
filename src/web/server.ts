@@ -11,6 +11,7 @@ import {
     getUndefinedLabelFromKind,
     getCleanNodeText,
     getPreservedLines,
+    addListedOpcodes,
     ResolveIncludedUdoResult
 } from './utils';
 
@@ -161,6 +162,8 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
 
         opcodeFromManual = options.opcodeInfos;
         jsonOpcodes = options.opcodeCompletions;
+        // the web server can't ask Csound: every opcode of a plain install comes from this list
+        addListedOpcodes(jsonOpcodes, options.csoundOpcodes);
         jsonFlags = options.flagCompletions;
         jsonMacros = options.macroCompletions;
 
