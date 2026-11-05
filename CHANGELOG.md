@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Next
 
+* Pass `csound.executable` and `csound.playArgs` to the language server, which runs that Csound with the `--opcode-lib`/`--opcode-dir` flags to learn the opcodes and user-defined types of the plugins it loads.
+
 ## 0.9.0
 
 * Replace the browser engine controls with a compact, retained Csound player in the bottom Panel, plus editor and player toolbar actions and a playback status-bar item.
