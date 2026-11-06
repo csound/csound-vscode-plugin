@@ -3,7 +3,8 @@
 
 The web extension cannot download the manual at runtime like the desktop server,
 so this script refreshes `src/web/resources/csound-json_data/`:
-- copies the manual JSON data (csound.json, flags.json, macros.json, manual_indexes.json);
+- copies the manual JSON data (csound.json, flags.json, macros.json, manual_indexes.json,
+  structs.json with the struct types Cabbage registers);
 - packs every opcode markdown page into opcodes.json ({opcode name: markdown}).
 Pages are processed like `load_opcodes` in the Rust server (csound-lsp/src/assets.rs),
 so web and desktop hovers show the same text.
@@ -25,7 +26,7 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE = PLUGIN_ROOT.parent / "csound_data" / "csound_manual"
 DEFAULT_OUTPUT = PLUGIN_ROOT / "src" / "web" / "resources" / "csound-json_data"
-DATA_FILES = ("csound.json", "flags.json", "macros.json", "manual_indexes.json")
+DATA_FILES = ("csound.json", "flags.json", "macros.json", "manual_indexes.json", "structs.json")
 
 # same patterns as csound-lsp/src/assets.rs
 INCLUDE_EXAMPLE = re.compile(r'--8<--\s+"([^"]+)"')

@@ -1,7 +1,7 @@
 import { DiagnosticSeverity, DiagnosticTag, TextDocumentSyncKind } from 'vscode-languageserver';
 import { TextDocument, TextEdit } from 'vscode-languageserver-textdocument';
 import { Parser, Language, Query, Point, Node } from 'web-tree-sitter';
-import { updateTree, DocState, GError, GenericError, isValidType, iterateTree, parseUdoFile } from './parser';
+import { updateTree, DocState, GError, GenericError, isValidType, iterateTree, parseUdoFile, parseManualStructs, udtHoverTitle, UserDefinedType } from './parser';
 import { complete } from './completion';
 import { listBrowserCsoundOpcodes } from './csoundOpcodes';
 import {
@@ -48,6 +48,8 @@ let opcodeFromManual: Record<string, string>;
 let jsonOpcodes: Map<string, any>;
 let jsonFlags: Map<string, any>;
 let jsonMacros: Map<string, any>;
+// struct types a host registers (Cabbage), from the manual's structs.json
+let hostTypes: Map<string, UserDefinedType> = new Map();
 
 let injectedLanguages: Record<string, { parser: Parser, query: Query }> = {};
 
@@ -165,6 +167,7 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
         jsonOpcodes = options.opcodeCompletions;
         jsonFlags = options.flagCompletions;
         jsonMacros = options.macroCompletions;
+        hostTypes = parseManualStructs(options.structCompletions ?? new Map());
 
         // html
         const htmlBuffer = base64ToUint8Array(options.htmlWasmUri);
@@ -270,7 +273,7 @@ function validateDocument(uri: string) {
     let diagnostics: Diagnostic[] = [];
     let cachedDiagnostics: Set<string> = new Set<string>();
 
-    const diagnosticReport = iterateTree(doc.tree, jsonMacros);
+    const diagnosticReport = iterateTree(doc.tree, jsonMacros, hostTypes);
     doc.cachedTypedVars = diagnosticReport.typedVars;
     doc.userDefinitions = diagnosticReport.userDefinitions;
     doc.includedUdoFiles = diagnosticReport.includedUdoFiles;
@@ -536,7 +539,8 @@ connection.onHover(({ textDocument, position }): Hover | null => {
             if (isType) {
                 const sd = docState.userDefinitions.userDefinedTypes.get(childTypeName);
                 if (sd) {
-                    const md = `## User-Defined Type\n\`\`\`csound\n${sd.udtFormat}\n\`\`\``;
+                    let md = `## ${udtHoverTitle(sd)}\n\`\`\`csound\n${sd.udtFormat}\n\`\`\``;
+                    if (sd.documentation) { md += `\n\n${sd.documentation}`; }
                     return {
                         contents: {
                             kind: "markdown",
