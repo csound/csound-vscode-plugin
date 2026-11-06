@@ -53,7 +53,11 @@ export async function activate(context: vscode.ExtensionContext) {
         documentSelector: [
             { scheme: "file", language: "csound" }
         ],
-        initializationOptions: { isOnWeb: false }
+        // The server runs the same Csound, with the --opcode-lib / --opcode-dir flags of
+        // csound.playArgs, to learn the opcodes and types of the plugins it loads.
+        initializationOptions: { isOnWeb: false, csound: csoundSettings() },
+        // sends workspace/didChangeConfiguration with { csound: { ... } } when the settings change
+        synchronize: { configurationSection: "csound" }
     };
 
     client = new LanguageClient(
@@ -72,6 +76,15 @@ export async function activate(context: vscode.ExtensionContext) {
     } catch (err) {
         vscode.window.showErrorMessage(`Csound Language Server failed to start: ${err}`);
     }
+}
+
+// How the user runs Csound, in the shape the language server reads.
+function csoundSettings(): { executable: string; playArgs: string[] } {
+    const config = vscode.workspace.getConfiguration("csound");
+    return {
+        executable: config.get<string>("executable", "csound"),
+        playArgs: config.get<string[]>("playArgs", [])
+    };
 }
 
 // This method is called when your extension is deactivated
