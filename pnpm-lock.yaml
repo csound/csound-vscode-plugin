@@ -24,8 +24,8 @@ importers:
         specifier: ^0.25.1
         version: 0.25.1
       tree-sitter-csound:
-        specifier: ^1.6.4
-        version: 1.6.4
+        specifier: ^1.6.5
+        version: 1.6.5
       tree-sitter-html:
         specifier: ^0.23.2
         version: 0.23.2
@@ -2247,10 +2247,10 @@ packages:
       tree-sitter:
         optional: true
 
-  tree-sitter-csound@1.6.4:
-    resolution: {integrity: sha512-EmX88JTb2bh7vSWQ+RS+gsJzfrI152g+Fwa8XA22GOd0yDfW65XpWXmpcyrN6WBnT073/NL66J5L8yjcnMufhg==}
+  tree-sitter-csound@1.6.5:
+    resolution: {integrity: sha512-lR6009UJ0S0uwoTnXYA7ynVkzTVKZ7Gkrxto75D4LlY2UhXgTSISof3LYRuUJpJ1szZVlHHclRS8+J8WENgMnQ==}
     peerDependencies:
-      tree-sitter: ^0.22.4
+      tree-sitter: ^0.25.0
     peerDependenciesMeta:
       tree-sitter:
         optional: true
@@ -4834,7 +4834,7 @@ snapshots:
       node-addon-api: 8.9.2
       node-gyp-build: 4.8.4
 
-  tree-sitter-csound@1.6.4:
+  tree-sitter-csound@1.6.5:
     dependencies:
       node-addon-api: 8.9.2
       node-gyp-build: 4.8.4
