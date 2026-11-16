@@ -13,9 +13,9 @@ csound-vscode-plugin currently provides:
 
 * Diagnostics as you type: unknown opcodes, undefined and unused variables, labels and macros, and syntax errors, with scoping aware of instruments, UDOs, score blocks and globals
 
-* Opcode completion with popup hints for opcode arguments, plus completion for command-line flags and macros
+* Opcode completion with popup hints for opcode arguments, plus completion for command-line flags and macros. The web extension also offers signatures for opcodes reported by the browser engine that lack a manual page, such as `printfi`.
 
-* Show opcode documentation in the editor: hover over a built-in opcode (Cabbage opcodes included), a user-defined opcode or a user-defined type
+* Hover over a built-in opcode (Cabbage opcodes included), a user-defined opcode or a user-defined type to see documentation in the editor. The web extension also shows definitions and documentation for Cabbage's built-in trigger structs.
 
 * Open the Csound manual by choosing `Csound: Open Csound Manual` from the command palette or using the `alt+m` shortcut. On desktop the HTML manual bundled with the language server is shown inside VS Code and works offline; on the web the online manual is opened.
 
@@ -80,11 +80,13 @@ In the browser, start a CSD and evaluate `.orc` or `.sco` code directly in the r
 | setting                     | default       | description                                                                                                                                 |
 | --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `csound.executable`         | `"csound"`    | The Csound executable. The default value of `csound` will run the system wide Csound. If you wish to use another Csound executable you can do so by passing an updated path, or browsing for a Csound executable from the Command palette. |
-| `csound.playArgs`           | `[ "-odac" ]` | Arguments to give to Csound when used for playing the current file.<br /> An array of strings, each element an argument including the leading dash.<br />The language server reads `--opcode-lib=` and `--opcode-dir=` from here, as well as from the CsOptions of open files and from `.csound7rc`, so that the opcodes and types of those plugins are known. Use absolute paths here: relative paths in CsOptions are resolved from the file's folder. |
+| `csound.playArgs`           | `[ "-odac" ]` | Arguments to pass to Csound when playing the current file. Enter each argument as a separate string, including its leading dash. |
 | `csound.saveSilentlyOnPlay` | `false`       | Save without prompting before playing or rendering the current file. Choosing "Always silently save before playing" in the prompt sets it. |
 | `csound.UDPAddress`         | `127.0.0.1`   | Address to send desktop live coding evaluations over UDP. |
 | `csound.UDPPort`            | `10000`       | Port to send desktop live coding evaluations over UDP. |
 | `csound.web.projectRoot` | `"."` | Browser project directory relative to the owning workspace folder. The CSD, includes, and samples must be inside this directory. |
+
+On desktop, the language server uses the configured `csound.executable` to discover opcodes and types from plugins loaded with `--opcode-lib=` and `--opcode-dir=`. It reads these flags from `csound.playArgs`, the `<CsOptions>` of open CSD files, and `.csound7rc`. Use absolute plugin paths in `csound.playArgs`. Relative paths in `<CsOptions>` resolve from the CSD's folder.
 
 ## Known Issues
 
@@ -92,11 +94,19 @@ In the browser, start a CSD and evaluate `.orc` or `.sco` code directly in the r
 
 ## Development Checks
 
-Run `npm run test-web-playback` for playback ordering, cancellation, project synchronization, and shared live-coding checks. These checks also run as part of `npm test` preparation.
+Run `npm run test-web-playback` for playback ordering, cancellation, project synchronization, and shared live-coding checks. Run `npm run test-web-opcodes` to verify opcode discovery against the bundled browser engine. Both checks run as part of `npm test` preparation.
 
 For a browser runtime smoke test, run `npm run package-web`, serve the repository with `python3 -m http.server 8000 --bind 127.0.0.1`, and open the [runtime smoke test](http://127.0.0.1:8000/scripts/test-web-runtime.html). Click **Enable Audio & Play** if prompted. The silent test exercises parent includes, WAV samples, switching documents during playback, paused Stop, reuse after reset, and runtime cleanup. This harness checks the browser runtime; view lifetime, native toolbars, and focus behavior also need testing inside VS Code.
 
 ## Release Notes
+
+### 0.10.0
+
+* Use the configured desktop Csound executable and plugin-loading flags to recognize opcodes and types from installed plugins. The language server receives updates when Csound settings change.
+* Discover opcodes directly from the browser engine, so diagnostics recognize available opcodes such as `printfi` and completion shows their signatures even when they lack a manual page.
+* Recognize the built-in Cabbage structs `CabbageNumTrig` and `CabbageStrTrig` in web language features and show their documentation on hover.
+* Refresh the bundled web manual and completion data, including `tonela`, `atonela`, and the updated `mincer`, `filescal`, and `temposcal` signatures.
+* Update the Csound Tree-sitter grammar to 1.6.6.
 
 ### 0.9.0
 

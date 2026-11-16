@@ -4,10 +4,15 @@ All notable changes to the "csound-vscode-plugin" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## Next
+## 0.10.0
 
-* Pass `csound.executable` and `csound.playArgs` to the language server, which runs that Csound with the `--opcode-lib`/`--opcode-dir` flags to learn the opcodes and user-defined types of the plugins it loads.
-* Web: recognise the opcodes that have no manual page (e.g. `printfi`) by asking the browser Csound (`@csound/browser`) which opcodes it can run, and show their signatures in completion. The engine is loaded in a separate chunk after the language server has started.
+* Use the configured desktop Csound executable and plugin-loading flags to recognize opcodes and types from installed plugins. The language server receives updates when Csound settings change.
+* Discover opcodes directly from the browser engine, so diagnostics recognize available opcodes such as `printfi` and completion shows their signatures even when they lack a manual page.
+* Recognize the built-in Cabbage structs `CabbageNumTrig` and `CabbageStrTrig` in web language features and show their documentation on hover.
+* Refresh the bundled web manual and completion data, including `tonela`, `atonela`, and the updated `mincer`, `filescal`, and `temposcal` signatures.
+* Update the Csound Tree-sitter grammar to 1.6.6.
+* Add a regression check for opcode discovery against the bundled browser engine and run it before the VS Code integration tests.
+* Remove pnpm configuration and use npm for dependency management.
 
 ## 0.9.0
 
