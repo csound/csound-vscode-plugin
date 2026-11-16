@@ -795,7 +795,7 @@
         "description": "A simpler scanned synthesis implementation."
     },
     "temposcal": {
-        "prefix": "temposcal(ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, ithresh])",
+        "prefix": "temposcal(ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, konset, koffset, kthresh, ibeta])",
         "body": "temposcal",
         "description": "Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'."
     },
@@ -3064,6 +3064,11 @@
         "body": "outq3",
         "description": "Writes samples to quad channel 3 of an external device or stream."
     },
+    "atonela": {
+        "prefix": "atonela(asig, khp [, iskip])",
+        "body": "atonela",
+        "description": "A look-ahead first-order high-pass filter equivalent to [atone]."
+    },
     "ctrlselect": {
         "prefix": "ctrlselect(kpre)",
         "body": "ctrlselect",
@@ -3742,7 +3747,7 @@
     "midichn": {
         "prefix": "midichn()",
         "body": "midichn",
-        "description": "Returns the MIDI channel number (1 - 16) from which the note was activated."
+        "description": "Returns the MIDI channel number from which the note was activated: 1 to 16, or up to 1024 for input mapped from multiple ports."
     },
     "monitor": {
         "prefix": "monitor()",
@@ -5365,7 +5370,7 @@
         "description": "A mostly bandlimited shape-shifting square-pulse-saw-sinewave oscillator with hardsync."
     },
     "mincer": {
-        "prefix": "mincer(atimpt, kamp, kpitch, ktab, klock [ ,ifftsize, idecim])",
+        "prefix": "mincer(atimpt, kamp, kpitch, ktab, klock [ ,ifftsize, idecim, ibeta])",
         "body": "mincer",
         "description": "Phase-locked vocoder processing."
     },
@@ -6364,6 +6369,11 @@
         "body": "ftmorf",
         "description": "Uses an index into a table of ftable numbers to morph between adjacent tables in the list. This morphed function is written into the table referenced by _iresfn_ on every k-cycle."
     },
+    "tonela": {
+        "prefix": "tonela(asig, khp [, iskip])",
+        "body": "tonela",
+        "description": "A look-ahead first-order recursive low-pass filter equivalent to [tone]."
+    },
     "inletk": {
         "prefix": "inletk(Sname)",
         "body": "inletk",
@@ -6415,7 +6425,7 @@
         "description": "Writes audio data to an external device or stream, either from audio variables or from an audio array."
     },
     "filescal": {
-        "prefix": "filescal(ktimescal, kamp, kpitch, Sfile, klock [,ifftsize, idecim, ithresh])",
+        "prefix": "filescal(ktimescal, kamp, kpitch, Sfile, klock [,ifftsize, idecim, konset, koffset, kthresh, ibeta])",
         "body": "filescal",
         "description": "Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'."
     },
