@@ -55,7 +55,48 @@ export interface UserDefinedType {
     udtName: string;
     udtFormat: string;
     udtMembers: UdtMember[];
+    // known before the file is read (registered by a host such as Cabbage), so a struct in the file may replace it
+    predefined?: boolean;
+    // the host that registers it, e.g. "Cabbage"
+    source?: string;
+    // markdown shown on hover below the definition
+    documentation?: string;
 };
+
+// `{ "CabbageNumTrig": { "members": [["val", "k"], ["trig", "k"]], "description": "...",
+//    "opcodes": ["cabbageGetValue"], "source": "Cabbage", "doc": "https://..." } }`
+// from the manual (structs.json), as `ManualStruct::to_udt` in csound-lsp/src/assets.rs
+export function parseManualStructs(data: Map<string, any>): Map<string, UserDefinedType> {
+    const types = new Map<string, UserDefinedType>();
+    for (const [name, s] of data) {
+        const members: [string, string][] = Array.isArray(s?.members) ? s.members : [];
+        if (members.length === 0) { continue; }
+
+        const documentation: string[] = [];
+        if (s.description) { documentation.push(s.description); }
+        if (Array.isArray(s.opcodes) && s.opcodes.length > 0) {
+            documentation.push(`**Accepted by:** ${s.opcodes.map((o: string) => `\`${o}\``).join(", ")}`);
+        }
+        if (s.doc) {
+            documentation.push(`[${s.source ? `${s.source} documentation` : "Documentation"}](${s.doc})`);
+        }
+
+        types.set(name, {
+            udtName: name,
+            udtFormat: `struct ${name} ${members.map(([n, t]) => `${n}:${t}`).join(", ")}`,
+            udtMembers: members.map(([n, t]) => ({ name: n, type: t })),
+            predefined: true,
+            source: s.source || undefined,
+            documentation: documentation.length > 0 ? documentation.join("\n\n") : undefined
+        });
+    }
+    return types;
+}
+
+export function udtHoverTitle(udt: UserDefinedType): string {
+    if (udt.source) { return `${udt.source} Type`; }
+    return udt.predefined ? "Plugin Type" : "User-Defined Type";
+}
 
 export type VarDataType =
     | { kind: "INIT_TIME" }
@@ -450,9 +491,12 @@ export function isValidType(typeIdentifier: string): boolean {
     ].includes(trimmed);
 }
 
-export function iterateTree(tree: Tree, macros: any): TreeReport {
+// `knownTypes` are known before the file is read, as the host registers them (Cabbage)
+export function iterateTree(tree: Tree, macros: any, knownTypes: Map<string, UserDefinedType> = new Map()): TreeReport {
     let toVisit = [tree.rootNode];
     let report = initializeTreeReport();
+    report.userDefinitions.userDefinedTypes = new Map(knownTypes);
+    report.udt = new Set(knownTypes.keys());
     let hasCabbageStart = false;
     let hasCabbageAraStart = false;
 
@@ -1402,7 +1446,8 @@ function addUserDefinedType(node: Node, key: string, udef: UserDefinitions) {
     }
 
     let udt = udef.userDefinedTypes.get(key);
-    if (!udt) {
+    // a struct written in the file replaces a host type with the same name
+    if (!udt || udt.predefined) {
         localUdt.udtName = key;
         localUdt.udtFormat = structFormat;
         udef.userDefinedTypes.set(key, localUdt);

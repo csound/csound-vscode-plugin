@@ -383,10 +383,11 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p -w . --outDir out",
         "check-web": "tsc -p src/web/tsconfig.json --noEmit",
-        "pretest": "npm run test-web-playback && npm run compile-tests && npm run check-web && npm run compile && npm run lint",
+        "pretest": "npm run test-web-playback && npm run test-web-opcodes && npm run compile-tests && npm run check-web && npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
-        "test-web-playback": "node scripts/test-web-playback.cjs"
+        "test-web-playback": "node scripts/test-web-playback.cjs",
+        "test-web-opcodes": "node scripts/test-web-opcodes.cjs"
     },
     "devDependencies": {
         "@types/glob": "^7.2.0",

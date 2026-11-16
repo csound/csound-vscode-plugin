@@ -1,0 +1,41 @@
+{
+    "CabbageNumTrig": {
+        "members": [
+            [
+                "val",
+                "k"
+            ],
+            [
+                "trig",
+                "k"
+            ]
+        ],
+        "description": "Many Cabbage get opcodes return a value plus a trigger that fires for one k-cycle whenever that value changes. Cabbage registers two struct types so both outputs can live in a single variable. Use with numeric channels.",
+        "opcodes": [
+            "cabbageGetValue"
+        ],
+        "source": "Cabbage",
+        "doc": "https://cabbageaudio.com/docs/using/csound7/#built-in-trigger-structs"
+    },
+    "CabbageStrTrig": {
+        "members": [
+            [
+                "val",
+                "S"
+            ],
+            [
+                "trig",
+                "k"
+            ]
+        ],
+        "description": "Many Cabbage get opcodes return a value plus a trigger that fires for one k-cycle whenever that value changes. Cabbage registers two struct types so both outputs can live in a single variable. Use with string channels and string properties.",
+        "opcodes": [
+            "cabbageGetValue",
+            "cabbageGet",
+            "cabbageJsonGet",
+            "cabbageAraGetUpdateEvent"
+        ],
+        "source": "Cabbage",
+        "doc": "https://cabbageaudio.com/docs/using/csound7/#built-in-trigger-structs"
+    }
+}

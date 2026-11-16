@@ -1,8 +1,9 @@
 import { DiagnosticSeverity, DiagnosticTag, TextDocumentSyncKind } from 'vscode-languageserver';
 import { TextDocument, TextEdit } from 'vscode-languageserver-textdocument';
 import { Parser, Language, Query, Point, Node } from 'web-tree-sitter';
-import { updateTree, DocState, GError, GenericError, isValidType, iterateTree, parseUdoFile } from './parser';
+import { updateTree, DocState, GError, GenericError, isValidType, iterateTree, parseUdoFile, parseManualStructs, udtHoverTitle, UserDefinedType } from './parser';
 import { complete } from './completion';
+import { listBrowserCsoundOpcodes } from './csoundOpcodes';
 import {
     SEMANTIC_TOKEN_TYPE,
     getSemanticTokens,
@@ -11,6 +12,7 @@ import {
     getUndefinedLabelFromKind,
     getCleanNodeText,
     getPreservedLines,
+    addListedOpcodes,
     ResolveIncludedUdoResult
 } from './utils';
 
@@ -46,6 +48,8 @@ let opcodeFromManual: Record<string, string>;
 let jsonOpcodes: Map<string, any>;
 let jsonFlags: Map<string, any>;
 let jsonMacros: Map<string, any>;
+// struct types a host registers (Cabbage), from the manual's structs.json
+let hostTypes: Map<string, UserDefinedType> = new Map();
 
 let injectedLanguages: Record<string, { parser: Parser, query: Query }> = {};
 
@@ -163,6 +167,7 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
         jsonOpcodes = options.opcodeCompletions;
         jsonFlags = options.flagCompletions;
         jsonMacros = options.macroCompletions;
+        hostTypes = parseManualStructs(options.structCompletions ?? new Map());
 
         // html
         const htmlBuffer = base64ToUint8Array(options.htmlWasmUri);
@@ -241,6 +246,20 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
     };
 });
 
+connection.onInitialized(() => {
+    // Opcodes without a manual page (printfi, eventi, ...) must not look unknown. The web server
+    // can't run csound, so the Csound that plays in the browser lists what it can run.
+    listBrowserCsoundOpcodes()
+        .then(({ source, opcodes }) => {
+            const added = addListedOpcodes(jsonOpcodes, opcodes, source);
+            connection.console.log(`Opcodes listed by ${source}: ${opcodes.size}, ${added} without a manual page`);
+            for (const uri of docs.keys()) {
+                validateDocument(uri);
+            }
+        })
+        .catch(error => connection.console.warn(`Opcodes of the browser Csound unavailable: ${error}`));
+});
+
 documents.onDidClose(params => {
     docs.get(params.document.uri)?.tree?.delete();
     docs.delete(params.document.uri);
@@ -254,7 +273,7 @@ function validateDocument(uri: string) {
     let diagnostics: Diagnostic[] = [];
     let cachedDiagnostics: Set<string> = new Set<string>();
 
-    const diagnosticReport = iterateTree(doc.tree, jsonMacros);
+    const diagnosticReport = iterateTree(doc.tree, jsonMacros, hostTypes);
     doc.cachedTypedVars = diagnosticReport.typedVars;
     doc.userDefinitions = diagnosticReport.userDefinitions;
     doc.includedUdoFiles = diagnosticReport.includedUdoFiles;
@@ -520,7 +539,8 @@ connection.onHover(({ textDocument, position }): Hover | null => {
             if (isType) {
                 const sd = docState.userDefinitions.userDefinedTypes.get(childTypeName);
                 if (sd) {
-                    const md = `## User-Defined Type\n\`\`\`csound\n${sd.udtFormat}\n\`\`\``;
+                    let md = `## ${udtHoverTitle(sd)}\n\`\`\`csound\n${sd.udtFormat}\n\`\`\``;
+                    if (sd.documentation) { md += `\n\n${sd.documentation}`; }
                     return {
                         contents: {
                             kind: "markdown",

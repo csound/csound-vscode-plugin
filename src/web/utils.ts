@@ -283,3 +283,64 @@ export function getNameAndTypeFromLegacyVar(variable: string): { varName: string
     if (!vMatch) { return { varName: variable, varType: "" }; }
     return { varName: vMatch[2], varType: vMatch[1] + (vMatch[3] ?? "") };
 }
+
+// opcode name -> (outputs, inputs) signatures, as csound --list-opcodes1 prints them
+export type ListedOpcodes = Map<string, [string, string][]>;
+
+// One entry of csoundUgenListOpcodes in @csound/browser.
+export interface UgenOpcodeInfo {
+    opname: string,
+    outypes: string,
+    intypes: string
+}
+
+const OPCODE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const MAX_LISTED_SIGNATURES = 8;
+
+// Same rules as parse_opcode_list in csound-lsp: real opcode names only, each signature once.
+export function groupListedOpcodes(entries: UgenOpcodeInfo[]): ListedOpcodes {
+    const listed: ListedOpcodes = new Map();
+    for (const entry of entries) {
+        // internal variants are named like poscil3.a: the command line lists them as poscil3
+        const opname = entry.opname.split(".")[0];
+        const { outypes, intypes } = entry;
+        if (!OPCODE_NAME.test(opname)) { continue; }
+        // the command line prints (null) for no outputs or inputs
+        const signature: [string, string] = [outypes || "(null)", intypes || "(null)"];
+        const signatures = listed.get(opname) ?? [];
+        if (!signatures.some(([o, i]) => o === signature[0] && i === signature[1])) {
+            signatures.push(signature);
+        }
+        listed.set(opname, signatures);
+    }
+    return listed;
+}
+
+function listedOpcodeDescription(source: string, signatures: [string, string][]): string {
+    let description = `Opcode listed by ${source} (outputs, inputs):`;
+    for (const [outputs, inputs] of signatures.slice(0, MAX_LISTED_SIGNATURES)) {
+        description += `\n${outputs} ${inputs}`;
+    }
+    if (signatures.length > MAX_LISTED_SIGNATURES) {
+        description += `\n... and ${signatures.length - MAX_LISTED_SIGNATURES} more`;
+    }
+    return description;
+}
+
+// Mirrors add_listed_opcodes_to_cs_references in csound-lsp: opcodes without a manual page
+// (printfi, eventi, ...) become known, while manual entries keep their documentation.
+export function addListedOpcodes(opcodes: Map<string, any>, listed: ListedOpcodes, source: string): number {
+    let added = 0;
+    for (const [name, signatures] of listed) {
+        // one-letter names are type casts (B, b), not opcodes to suggest
+        if (name.length < 2 || opcodes.has(name)) { continue; }
+        opcodes.set(name, { prefix: name, body: name, description: listedOpcodeDescription(source, signatures) });
+        added++;
+    }
+    return added;
+}
+
+// Csound encodes its version as major * 1000 + minor * 10 + patch.
+export function csoundVersionName(version: number): string {
+    return `Csound ${Math.floor(version / 1000)}.${Math.floor(version / 10) % 100}.${version % 10}`;
+}
